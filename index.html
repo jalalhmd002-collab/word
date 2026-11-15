@@ -571,14 +571,37 @@
   </div>
 
   <div id="voiceFallbackModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="voiceFallbackTitle">
-    <div class="modal-card">
-      <h3 class="modal-title" id="voiceFallbackTitle">الإملاء الصوتي</h3>
-      <p class="modal-desc" id="voiceFallbackDesc">تعذر تشغيل الميكروفون مباشرة من المتصفح. يمكنك الضغط في المربع أدناه واستخدام زر الميكروفون في لوحة مفاتيح الهاتف، ثم الضغط على إدراج:</p>
-      <textarea id="voiceFallbackInput" class="modal-input" style="height:96px; padding:10px; resize:vertical; font-family:inherit;" placeholder="اضغط هنا وتحدث عبر مايك لوحة المفاتيح..."></textarea>
-      <div class="modal-actions" style="flex-wrap:wrap;">
-        <button type="button" class="btn-fluent" id="btnRequestMicPerm">تفعيل إذن المايك</button>
-        <button type="button" class="btn-fluent" id="btnCancelVoiceFallback">إلغاء</button>
-        <button type="button" class="btn-fluent primary-outline" id="btnInsertVoiceFallback">إدراج في المستند</button>
+    <div class="modal-card" style="max-width:430px;">
+      <h3 class="modal-title" id="voiceFallbackTitle">الإملاء الصوتي الذكي</h3>
+      <p class="modal-desc" id="voiceFallbackDesc" style="margin-bottom:10px;"></p>
+
+      <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+        <button type="button" class="btn-fluent primary-outline" id="btnTabKbMic" style="flex:1; font-size:12px;">مايك الكيبورد (بدون نت)</button>
+        <button type="button" class="btn-fluent" id="btnTabAudioRec" style="flex:1; font-size:12px;">مسجل الصوت (AI)</button>
+      </div>
+
+      <div id="panelKbMic">
+        <textarea id="voiceFallbackInput" class="modal-input" style="height:105px; padding:10px; resize:vertical; font-family:inherit; margin-bottom:10px;" placeholder="اضغط هنا ثم اضغط على أيقونة الميكروفون في لوحة مفاتيح الهاتف وتحدث..."></textarea>
+        <div class="modal-actions" style="flex-wrap:wrap;">
+          <button type="button" class="btn-fluent" id="btnRetryDirectMic">إعادة محاولة المايك المباشر</button>
+          <button type="button" class="btn-fluent" id="btnCancelVoiceFallback">إغلاق</button>
+          <button type="button" class="btn-fluent primary-outline" id="btnInsertVoiceFallback">إدراج في المستند</button>
+        </div>
+      </div>
+
+      <div id="panelAudioRec" style="display:none;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px; border:1px solid var(--border-subtle); border-radius:8px; background:#f8f8f7; margin-bottom:10px;">
+          <button type="button" class="btn-fluent primary-outline" id="btnAudioRecToggle">بدء التسجيل الصوتي</button>
+          <span id="audioRecTimer" style="font-weight:700; font-size:13px; color:var(--text-secondary);">00:00</span>
+        </div>
+        <div id="audioPlayerWrap" style="display:none; margin-bottom:10px;">
+          <audio id="audioPlayback" controls style="width:100%; height:36px;"></audio>
+        </div>
+        <input type="password" id="geminiKeyInput" class="modal-input" style="margin-bottom:8px; font-size:12.5px;" placeholder="مفتاح Gemini API (اختياري لتحويل التسجيل إلى نص)" />
+        <div class="modal-actions" style="flex-wrap:wrap;">
+          <button type="button" class="btn-fluent" id="btnCancelAudioRec">إغلاق</button>
+          <button type="button" class="btn-fluent primary-outline" id="btnTranscribeAudio" disabled>تحويل الكلام لنص وإدراجه</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2484,7 +2507,7 @@
       window.addEventListener('pagehide', saveDocState);
       window.addEventListener('beforeunload', saveDocState);
 
-      /* ================= الإملاء الصوتي عبر الميكروفون ================= */
+      /* ================= الإملاء الصوتي الذكي (متعدد المسارات) ================= */
       const btnVoiceDictate = $('btnVoiceDictate');
       const voiceBtnLabel = $('voiceBtnLabel');
       const dictationBar = $('dictationBar');
@@ -2494,6 +2517,16 @@
       const voiceFallbackModal = $('voiceFallbackModal');
       const voiceFallbackDesc = $('voiceFallbackDesc');
       const voiceFallbackInput = $('voiceFallbackInput');
+      const panelKbMic = $('panelKbMic');
+      const panelAudioRec = $('panelAudioRec');
+      const btnTabKbMic = $('btnTabKbMic');
+      const btnTabAudioRec = $('btnTabAudioRec');
+      const btnAudioRecToggle = $('btnAudioRecToggle');
+      const audioRecTimer = $('audioRecTimer');
+      const audioPlayerWrap = $('audioPlayerWrap');
+      const audioPlayback = $('audioPlayback');
+      const geminiKeyInput = $('geminiKeyInput');
+      const btnTranscribeAudio = $('btnTranscribeAudio');
 
       const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
       let isRecording = false;
@@ -2501,27 +2534,179 @@
       let voiceLang = 'ar-SA';
       let voiceRestartTimer = null;
 
+      let mediaRecorder = null;
+      let audioChunks = [];
+      let recordedBlob = null;
+      let audioRecInterval = null;
+      let audioRecSeconds = 0;
+
+      try {
+        const savedKey = localStorage.getItem('jh_word_gemini_key');
+        if (savedKey) geminiKeyInput.value = savedKey;
+      } catch (_) {}
+
+      geminiKeyInput.addEventListener('change', () => {
+        try { localStorage.setItem('jh_word_gemini_key', geminiKeyInput.value.trim()); } catch (_) {}
+      });
+
+      function switchVoiceTab(tab) {
+        const isKb = tab === 'kb';
+        panelKbMic.style.display = isKb ? 'block' : 'none';
+        panelAudioRec.style.display = isKb ? 'none' : 'block';
+        btnTabKbMic.classList.toggle('primary-outline', isKb);
+        btnTabAudioRec.classList.toggle('primary-outline', !isKb);
+      }
+
+      btnTabKbMic.addEventListener('click', () => switchVoiceTab('kb'));
+      btnTabAudioRec.addEventListener('click', () => switchVoiceTab('audio'));
+
       function openVoiceFallback(reason) {
-        voiceFallbackDesc.textContent = reason + ' يمكنك الضغط في المربع أدناه واستخدام زر الميكروفون في لوحة مفاتيح الهاتف (يعمل بدون إنترنت)، ثم الضغط على إدراج:';
+        voiceFallbackDesc.textContent = reason;
         voiceFallbackInput.value = '';
+        switchVoiceTab('kb');
         voiceFallbackModal.classList.add('open');
         document.body.classList.add('modal-open');
         setTimeout(() => voiceFallbackInput.focus(), 80);
       }
 
+      function stopAudioRecIfRunning() {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          try { mediaRecorder.stop(); } catch (_) {}
+        }
+        clearInterval(audioRecInterval);
+      }
+
       function closeVoiceFallback() {
+        stopAudioRecIfRunning();
         voiceFallbackModal.classList.remove('open');
         document.body.classList.remove('modal-open');
       }
 
       $('btnCancelVoiceFallback').addEventListener('click', closeVoiceFallback);
+      $('btnCancelAudioRec').addEventListener('click', closeVoiceFallback);
       voiceFallbackModal.addEventListener('click', (e) => { if (e.target === voiceFallbackModal) closeVoiceFallback(); });
+
       $('btnInsertVoiceFallback').addEventListener('click', () => {
         const txt = voiceFallbackInput.value.trim();
         closeVoiceFallback();
         if (txt) {
           insertDictatedText(txt);
           showToast('تم إدراج النص في المستند');
+        }
+      });
+
+      $('btnRetryDirectMic').addEventListener('click', async () => {
+        closeVoiceFallback();
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach((t) => t.stop());
+          } catch (_) {}
+        }
+        startDictation();
+      });
+
+      function fmtSec(s) {
+        const m = String(Math.floor(s / 60)).padStart(2, '0');
+        const sec = String(s % 60).padStart(2, '0');
+        return m + ':' + sec;
+      }
+
+      btnAudioRecToggle.addEventListener('click', async () => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+          return;
+        }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+          showToast('المتصفح لا يدعم تسجيل الصوت في هذا الوضع');
+          return;
+        }
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audioChunks = [];
+          recordedBlob = null;
+          btnTranscribeAudio.disabled = true;
+          audioPlayerWrap.style.display = 'none';
+
+          const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+          mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+
+          mediaRecorder.ondataavailable = (ev) => {
+            if (ev.data && ev.data.size > 0) audioChunks.push(ev.data);
+          };
+          mediaRecorder.onstop = () => {
+            stream.getTracks().forEach((t) => t.stop());
+            clearInterval(audioRecInterval);
+            btnAudioRecToggle.textContent = 'إعادة التسجيل';
+            btnAudioRecToggle.classList.remove('danger-outline');
+            btnAudioRecToggle.classList.add('primary-outline');
+            if (audioChunks.length) {
+              recordedBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+              audioPlayback.src = URL.createObjectURL(recordedBlob);
+              audioPlayerWrap.style.display = 'block';
+              btnTranscribeAudio.disabled = false;
+            }
+          };
+
+          audioRecSeconds = 0;
+          audioRecTimer.textContent = '00:00';
+          audioRecInterval = setInterval(() => {
+            audioRecSeconds++;
+            audioRecTimer.textContent = fmtSec(audioRecSeconds);
+          }, 1000);
+
+          mediaRecorder.start();
+          btnAudioRecToggle.textContent = 'إيقاف التسجيل';
+          btnAudioRecToggle.classList.remove('primary-outline');
+          btnAudioRecToggle.classList.add('danger-outline');
+        } catch (err) {
+          showToast('تعذر الوصول للميكروفون — تأكد من فتح الصفحة عبر https:// والسماح بالمايك');
+        }
+      });
+
+      btnTranscribeAudio.addEventListener('click', async () => {
+        if (!recordedBlob) return;
+        const apiKey = geminiKeyInput.value.trim();
+        if (!apiKey) {
+          showToast('أدخل مفتاح Gemini API لتحويل التسجيل إلى نص');
+          geminiKeyInput.focus();
+          return;
+        }
+        try { localStorage.setItem('jh_word_gemini_key', apiKey); } catch (_) {}
+
+        btnTranscribeAudio.disabled = true;
+        btnTranscribeAudio.textContent = 'جاري التفريغ...';
+        try {
+          const base64Audio = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(String(reader.result || '').split(',')[1] || '');
+            reader.onerror = reject;
+            reader.readAsDataURL(recordedBlob);
+          });
+          const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: 'فرّغ هذا التسجيل الصوتي إلى نص عربي واضح ومضبوط الإملاء بدون أي مقدمات أو تعليقات، فقط النص المنطوق.' },
+                  { inline_data: { mime_type: recordedBlob.type || 'audio/webm', data: base64Audio } }
+                ]
+              }]
+            })
+          });
+          const data = await res.json();
+          const transcript = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
+            data.candidates[0].content.parts && data.candidates[0].content.parts.map(p => p.text || '').join(' ').trim();
+          if (!transcript) throw new Error((data && data.error && data.error.message) || 'لم يتم استخراج نص');
+          closeVoiceFallback();
+          insertDictatedText(transcript);
+          showToast('تم تفريغ الصوت وإدراجه في المستند');
+        } catch (err) {
+          showToast('تعذر التفريغ: ' + ((err && err.message) ? err.message : 'خطأ في الاتصال'));
+        } finally {
+          btnTranscribeAudio.disabled = false;
+          btnTranscribeAudio.textContent = 'تحويل الكلام لنص وإدراجه';
         }
       });
 
@@ -2594,33 +2779,17 @@
         setDictationUI(false);
       }
 
-      $('btnRequestMicPerm').addEventListener('click', async () => {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          showToast('المتصفح لا يدعم طلب إذن الميكروفون هنا');
-          return;
-        }
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          stream.getTracks().forEach((t) => t.stop());
-          closeVoiceFallback();
-          showToast('تم تفعيل إذن الميكروفون — جاري بدء الإملاء');
-          startDictation();
-        } catch (err) {
-          showToast('الميكروفون محظور في إعدادات المتصفح لهذا الموقع');
-        }
-      });
-
       function startDictation() {
-        if (!SpeechRec) {
-          openVoiceFallback('متصفحك الحالي لا يدعم الإملاء الصوتي المباشر.');
-          return;
-        }
         if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
           location.replace('https://' + location.host + location.pathname + location.search + location.hash);
           return;
         }
         if (window.isSecureContext === false) {
-          openVoiceFallback('الصفحة مفتوحة الآن ببروتوكول غير آمن (' + location.protocol + ')، والمتصفح يشترط فتحها عبر رابط https:// لتشغيل الميكروفون.');
+          openVoiceFallback('الملف مفتوح محلياً (' + location.protocol + ') لذا يمنع المتصفح المايك المباشر. استخدم "مايك الكيبورد" أدناه (يعمل بدون إنترنت):');
+          return;
+        }
+        if (!SpeechRec) {
+          openVoiceFallback('هذا المتصفح لا يدعم الإملاء المباشر. استخدم "مايك الكيبورد" أو "مسجل الصوت (AI)":');
           return;
         }
         if (!savedRange || !editor.contains(savedRange.commonAncestorContainer)) {
@@ -2667,25 +2836,25 @@
               if (err === 'not-allowed' || err === 'service-not-allowed') {
                 hadFatalError = true;
                 stopDictation();
-                openVoiceFallback('المتصفح رفض إذن الميكروفون. اضغط "تفعيل إذن المايك" للسماح من Chrome، أو استخدم مايك لوحة المفاتيح أدناه.');
+                openVoiceFallback('محرك الصوت المباشر غير متاح أو مرفوض في إعدادات الهاتف. استخدم "مايك الكيبورد" (بدون إنترنت) أو جرّب تبويب "مسجل الصوت (AI)":');
               } else if (err === 'audio-capture') {
                 hadFatalError = true;
                 stopDictation();
-                openVoiceFallback('لم يتم العثور على ميكروفون متاح على الجهاز.');
+                openVoiceFallback('لم يتم العثور على ميكروفون متاح. يمكنك استخدام "مايك الكيبورد" أدناه:');
               } else if (err === 'network') {
                 hadFatalError = true;
                 stopDictation();
-                openVoiceFallback('تعذر الاتصال بخدمة التعرف على الصوت (يلزم إنترنت مستقر).');
+                openVoiceFallback('خدمة الصوت السحابية للمتصفح غير متصلة. استخدم "مايك الكيبورد" أدناه:');
               } else if (err === 'language-not-supported') {
                 hadFatalError = true;
                 stopDictation();
-                openVoiceFallback('لغة الإملاء (' + voiceLang + ') غير مدعومة في محرك الصوت على هذا الهاتف.');
+                openVoiceFallback('لغة الإملاء (' + voiceLang + ') غير مدعومة في هذا المتصفح. استخدم "مايك الكيبورد" أو "مسجل الصوت (AI)":');
               } else if (err === 'no-speech') {
                 dictationText.textContent = 'لم يتم سماع صوت... تحدث الآن';
               } else if (err && err !== 'aborted') {
                 hadFatalError = true;
                 stopDictation();
-                openVoiceFallback('تعذر تشغيل الميكروفون (' + err + ').');
+                openVoiceFallback('تعذر الإملاء المباشر (' + err + '). استخدم "مايك الكيبورد" أو "مسجل الصوت (AI)":');
               }
             };
 
@@ -2699,7 +2868,7 @@
                 emptyEndCount++;
                 if (emptyEndCount >= 2) {
                   stopDictation();
-                  openVoiceFallback('أغلق المتصفح الميكروفون تلقائياً (قد يكون محرك صوت Google غير مفعل على الهاتف).');
+                  openVoiceFallback('توقف محرك الصوت في المتصفح تلقائياً. استخدم "مايك الكيبورد" (يعمل فوراً) أو "مسجل الصوت (AI)":');
                   return;
                 }
               }
@@ -2711,7 +2880,7 @@
             rec.start();
           } catch (e) {
             stopDictation();
-            openVoiceFallback('تعذر بدء الميكروفون مباشرة في هذا المتصفح.');
+            openVoiceFallback('تعذر تشغيل الإملاء المباشر هنا. استخدم "مايك الكيبورد" أو "مسجل الصوت (AI)":');
           }
         };
 
