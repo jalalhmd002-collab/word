@@ -225,7 +225,65 @@ body {
 
 .paper:focus { box-shadow: 0 0 0 3px rgba(37,99,235,.2), var(--shadow-lg); }
 
-.paper img { max-width: 100%; height: auto; }
+.paper img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: outline .15s;
+}
+
+.paper img:hover { outline: 2px solid var(--primary); outline-offset: 2px; }
+.paper img.img-selected { outline: 3px solid var(--primary); outline-offset: 3px; }
+
+/* ═══════════════════════════════════════════
+   Image Context Toolbar (floating)
+   ═══════════════════════════════════════════ */
+.img-toolbar {
+  position: fixed;
+  z-index: 9000;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.18);
+  display: none;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  max-width: 340px;
+}
+
+.img-toolbar.show { display: flex; }
+
+.img-toolbar button {
+  background: #f3f4f6;
+  color: var(--text);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all .15s;
+}
+
+.img-toolbar button:hover { background: #e5e7eb; }
+.img-toolbar button.active { background: var(--primary); color: #fff; }
+.img-toolbar button.danger { color: var(--danger); }
+.img-toolbar button.danger:hover { background: #fef2f2; }
+
+.img-toolbar .sep {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  flex-shrink: 0;
+}
 
 /* ═══════════════════════════════════════════
    Custom Modal
@@ -276,6 +334,7 @@ body {
   color: var(--text-light);
   margin-bottom: 20px;
   line-height: 1.6;
+  white-space: pre-line;
 }
 
 .modal-box .modal-actions {
@@ -380,6 +439,8 @@ body {
   min-height: 500px;
 }
 
+.preview-body img { max-width: 100%; height: auto; }
+
 /* ═══════════════════════════════════════════
    Toast Notification
    ═══════════════════════════════════════════ */
@@ -435,13 +496,15 @@ body {
   }
 
   .preview-body { padding: 24px 18px; }
+
+  .img-toolbar { max-width: 92vw; }
 }
 
 /* ═══════════════════════════════════════════
    Print Styles
    ═══════════════════════════════════════════ */
 @media print {
-  .file-bar, .toolbar, .toast, .modal-overlay, .preview-overlay { display: none !important; }
+  .file-bar, .toolbar, .toast, .modal-overlay, .preview-overlay, .img-toolbar { display: none !important; }
   .editor-wrapper { padding: 0; }
   .paper {
     box-shadow: none;
@@ -602,6 +665,14 @@ body {
 
   <div class="sep"></div>
 
+  <!-- إدراج صورة -->
+  <button onclick="triggerImageUpload()" data-tooltip="إدراج صورة">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    صورة
+  </button>
+
+  <div class="sep"></div>
+
   <!-- الكتابة بالصوت -->
   <button class="mic-btn" id="micBtn" onclick="toggleSpeech()" data-tooltip="الكتابة بالصوت">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="1" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
@@ -610,11 +681,31 @@ body {
 
 </div>
 
+<!-- input مخفي لاختيار الصور -->
+<input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleImageUpload(event)">
+
 <!-- ═══════════════════════════════════════
      منطقة الكتابة
      ═══════════════════════════════════════ -->
 <div class="editor-wrapper">
   <div class="paper" id="editor" contenteditable="true" spellcheck="true"></div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     شريط أدوات الصورة العائم
+     ═══════════════════════════════════════ -->
+<div class="img-toolbar" id="imgToolbar">
+  <button onclick="resizeSelectedImage('25%')" data-tooltip="صغير جداً">XS</button>
+  <button onclick="resizeSelectedImage('40%')" data-tooltip="صغير">S</button>
+  <button onclick="resizeSelectedImage('60%')" data-tooltip="متوسط">M</button>
+  <button onclick="resizeSelectedImage('80%')" data-tooltip="كبير">L</button>
+  <button onclick="resizeSelectedImage('100%')" data-tooltip="عرض كامل">XL</button>
+  <div class="sep"></div>
+  <button onclick="alignSelectedImage('right')" data-tooltip="محاذاة يمين">▶</button>
+  <button onclick="alignSelectedImage('center')" data-tooltip="توسيط">◆</button>
+  <button onclick="alignSelectedImage('left')" data-tooltip="محاذاة يسار">◀</button>
+  <div class="sep"></div>
+  <button class="danger" onclick="deleteSelectedImage()" data-tooltip="حذف الصورة">🗑️ حذف</button>
 </div>
 
 <!-- ═══════════════════════════════════════
@@ -659,6 +750,8 @@ const editor = document.getElementById('editor');
 let pendingAction = null;
 let recognition = null;
 let isRecording = false;
+let selectedImage = null;       // الصورة المحددة حالياً
+let savedSelection = null;      // حفظ موضع المؤشر قبل فتح اختيار الصورة
 
 /* ═══════════════════════════════════════════
    تحميل المستند المحفوظ عند بدء التشغيل
@@ -708,8 +801,9 @@ function confirmAction(message, action, type) {
 function modalConfirm() {
   closeModal();
   if (pendingAction) {
-    pendingAction();
+    const action = pendingAction;
     pendingAction = null;
+    action();
   }
 }
 
@@ -735,6 +829,34 @@ function showToast(message, type = '') {
 }
 
 /* ═══════════════════════════════════════════
+   حفظ واسترجاع موضع المؤشر
+   ═══════════════════════════════════════════ */
+function saveSelectionState() {
+  const sel = window.getSelection();
+  if (sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
+    // تأكد أن التحديد داخل المحرر
+    let node = range.startContainer;
+    while (node) {
+      if (node === editor) {
+        savedSelection = range.cloneRange();
+        return;
+      }
+      node = node.parentNode;
+    }
+  }
+  savedSelection = null;
+}
+
+function restoreSelectionState() {
+  if (savedSelection) {
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedSelection);
+  }
+}
+
+/* ═══════════════════════════════════════════
    عمليات الملفات
    ═══════════════════════════════════════════ */
 
@@ -744,6 +866,7 @@ function newDocument() {
   localStorage.removeItem('miniword_content');
   localStorage.removeItem('miniword_time');
   document.getElementById('saveInfo').textContent = '';
+  hideImageToolbar();
   showToast('📄 تم إنشاء مستند جديد', 'success');
 }
 
@@ -771,6 +894,7 @@ function exportWord() {
       <meta charset="utf-8">
       <style>
         body { direction: rtl; font-family: 'Cairo', 'Arial', sans-serif; font-size: 14pt; line-height: 1.8; text-align: right; }
+        img  { max-width: 100%; height: auto; }
         @page { size: A4; margin: 2cm; }
       </style>
     </head>
@@ -791,7 +915,11 @@ function exportWord() {
 // تصدير PDF
 function exportPDF() {
   const content = editor.cloneNode(true);
-  // تطبيق أنماط مباشرة على العنصر المستنسخ
+  // إزالة أي حدود تحديد الصور في النسخة
+  content.querySelectorAll('img').forEach(img => {
+    img.classList.remove('img-selected');
+    img.style.outline = 'none';
+  });
   content.style.direction = 'rtl';
   content.style.textAlign = 'right';
   content.style.fontFamily = "'Cairo', 'Tajawal', sans-serif";
@@ -807,12 +935,10 @@ function exportPDF() {
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  // التحقق من وجود html2pdf
   if (typeof html2pdf !== 'undefined') {
     html2pdf().set(opt).from(content).save().then(() => {
       showToast('📥 تم تصدير ملف PDF', 'success');
     }).catch(() => {
-      // fallback: استخدم الطباعة
       printAsPDF();
     });
   } else {
@@ -830,6 +956,7 @@ function printAsPDF() {
       <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
       <style>
         body { direction: rtl; font-family: 'Cairo', sans-serif; font-size: 14pt; line-height: 1.9; text-align: right; padding: 40px; }
+        img  { max-width: 100%; height: auto; }
         @page { size: A4; margin: 2cm; }
       </style>
     </head>
@@ -844,7 +971,14 @@ function printAsPDF() {
    المعاينة
    ═══════════════════════════════════════════ */
 function openPreview() {
-  document.getElementById('previewBody').innerHTML = editor.innerHTML || '<p style="color:#9ca3af;">المستند فارغ</p>';
+  const previewContent = editor.innerHTML || '<p style="color:#9ca3af;">المستند فارغ</p>';
+  document.getElementById('previewBody').innerHTML = previewContent;
+  // إزالة تحديد الصور في المعاينة
+  document.getElementById('previewBody').querySelectorAll('img').forEach(img => {
+    img.classList.remove('img-selected');
+    img.style.cursor = 'default';
+    img.style.outline = 'none';
+  });
   document.getElementById('previewOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
 }
@@ -862,6 +996,7 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closePreview();
     closeModal();
+    hideImageToolbar();
   }
 });
 
@@ -902,27 +1037,246 @@ function applyColor(command, color) {
 }
 
 /* ═══════════════════════════════════════════
-   الإملاء الصوتي - Web Speech API
+   إدراج الصور
    ═══════════════════════════════════════════ */
-function toggleSpeech() {
+function triggerImageUpload() {
+  // حفظ موضع المؤشر قبل فتح مربع اختيار الملف
+  saveSelectionState();
+  document.getElementById('imageInput').value = '';
+  document.getElementById('imageInput').click();
+}
+
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // التحقق من نوع الملف
+  if (!file.type.startsWith('image/')) {
+    showToast('❌ يرجى اختيار ملف صورة فقط', 'error');
+    return;
+  }
+
+  // التحقق من حجم الملف (أقصى 10 ميغا)
+  if (file.size > 10 * 1024 * 1024) {
+    showToast('❌ حجم الصورة كبير جداً (الحد الأقصى 10 ميغا)', 'error');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result;
+
+    // استرجاع موضع المؤشر المحفوظ
+    restoreSelectionState();
+    editor.focus();
+
+    const img = document.createElement('img');
+    img.src = base64;
+    img.style.maxWidth = '100%';
+    img.style.height = 'auto';
+    img.style.borderRadius = '4px';
+    img.style.display = 'block';
+    img.style.margin = '12px auto';
+
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) {
+      let node = sel.anchorNode;
+      let insideEditor = false;
+      while (node) {
+        if (node === editor) { insideEditor = true; break; }
+        node = node.parentNode;
+      }
+      if (insideEditor) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        // إضافة سطر فارغ بعد الصورة لضمان استمرار الكتابة
+        const br = document.createElement('br');
+        range.insertNode(br);
+        range.insertNode(img);
+        // وضع المؤشر بعد الصورة
+        range.setStartAfter(br);
+        range.setEndAfter(br);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } else {
+        editor.appendChild(img);
+        editor.appendChild(document.createElement('br'));
+      }
+    } else {
+      editor.appendChild(img);
+      editor.appendChild(document.createElement('br'));
+    }
+
+    showToast('🖼️ تم إدراج الصورة بنجاح', 'success');
+  };
+
+  reader.onerror = function() {
+    showToast('❌ فشل قراءة الصورة', 'error');
+  };
+
+  reader.readAsDataURL(file);
+}
+
+/* ═══════════════════════════════════════════
+   شريط أدوات الصورة العائم
+   ═══════════════════════════════════════════ */
+function showImageToolbar(img) {
+  selectedImage = img;
+
+  // إزالة التحديد السابق من أي صورة أخرى
+  editor.querySelectorAll('img.img-selected').forEach(i => i.classList.remove('img-selected'));
+  img.classList.add('img-selected');
+
+  const toolbar = document.getElementById('imgToolbar');
+  const rect = img.getBoundingClientRect();
+
+  // حساب موضع الشريط فوق الصورة أو تحتها
+  let top = rect.top - 50;
+  let left = rect.left + (rect.width / 2) - 170;
+
+  // إذا لم يكن هناك مساحة كافية فوق الصورة، أظهره تحتها
+  if (top < 10) {
+    top = rect.bottom + 8;
+  }
+
+  // حدود الشاشة
+  if (left < 8) left = 8;
+  if (left + 340 > window.innerWidth) left = window.innerWidth - 348;
+
+  toolbar.style.top = top + 'px';
+  toolbar.style.left = left + 'px';
+  toolbar.classList.add('show');
+}
+
+function hideImageToolbar() {
+  document.getElementById('imgToolbar').classList.remove('show');
+  if (selectedImage) {
+    selectedImage.classList.remove('img-selected');
+    selectedImage = null;
+  }
+}
+
+function resizeSelectedImage(size) {
+  if (!selectedImage) return;
+  selectedImage.style.maxWidth = size;
+  selectedImage.style.width = size;
+  // إعادة حساب موضع الشريط
+  setTimeout(() => {
+    if (selectedImage) showImageToolbar(selectedImage);
+  }, 50);
+}
+
+function alignSelectedImage(align) {
+  if (!selectedImage) return;
+  // لف الصورة في div للتحكم بالمحاذاة
+  const wrapper = selectedImage.parentElement;
+
+  if (align === 'center') {
+    selectedImage.style.display = 'block';
+    selectedImage.style.marginLeft = 'auto';
+    selectedImage.style.marginRight = 'auto';
+    selectedImage.style.float = 'none';
+  } else if (align === 'right') {
+    selectedImage.style.display = 'block';
+    selectedImage.style.marginLeft = 'auto';
+    selectedImage.style.marginRight = '0';
+    selectedImage.style.float = 'none';
+  } else if (align === 'left') {
+    selectedImage.style.display = 'block';
+    selectedImage.style.marginLeft = '0';
+    selectedImage.style.marginRight = 'auto';
+    selectedImage.style.float = 'none';
+  }
+
+  setTimeout(() => {
+    if (selectedImage) showImageToolbar(selectedImage);
+  }, 50);
+}
+
+function deleteSelectedImage() {
+  if (!selectedImage) return;
+  selectedImage.remove();
+  hideImageToolbar();
+  showToast('🗑️ تم حذف الصورة', '');
+}
+
+// الاستماع للنقر على الصور داخل المحرر
+editor.addEventListener('click', function(e) {
+  if (e.target.tagName === 'IMG') {
+    e.preventDefault();
+    e.stopPropagation();
+    showImageToolbar(e.target);
+  } else {
+    hideImageToolbar();
+  }
+});
+
+// إخفاء شريط الصورة عند النقر خارج المحرر والشريط
+document.addEventListener('click', function(e) {
+  if (selectedImage && !e.target.closest('#imgToolbar') && !e.target.closest('#editor')) {
+    hideImageToolbar();
+  }
+});
+
+// تحديث موضع شريط الصورة عند التمرير أو تغيير حجم النافذة
+window.addEventListener('scroll', function() {
+  if (selectedImage) showImageToolbar(selectedImage);
+}, { passive: true });
+window.addEventListener('resize', function() {
+  if (selectedImage) showImageToolbar(selectedImage);
+});
+
+
+/* ═══════════════════════════════════════════
+   الإملاء الصوتي - Web Speech API (مُحسّن للهاتف)
+   ═══════════════════════════════════════════ */
+async function toggleSpeech() {
   if (isRecording) {
     stopSpeech();
     return;
   }
 
+  // التحقق من دعم المتصفح
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
-    showToast('❌ متصفحك لا يدعم الإملاء الصوتي. جرّب Chrome أو Edge.', 'error');
+    confirmAction(
+      'متصفحك لا يدعم ميزة الإملاء الصوتي.\n\nجرّب استخدام متصفح Google Chrome أو Microsoft Edge.',
+      function(){},
+      'danger'
+    );
     return;
   }
 
+  // طلب إذن المايكروفون صراحةً عبر getUserMedia قبل بدء التعرف
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // إيقاف المسار فوراً بعد الحصول على الإذن (SpeechRecognition سيفتح مساره الخاص)
+    stream.getTracks().forEach(track => track.stop());
+  } catch (err) {
+    let reason = '';
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      reason = 'لم يتم منح إذن الوصول للمايكروفون.\n\nيرجى السماح بالوصول من إعدادات المتصفح ثم المحاولة مرة أخرى.';
+    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      reason = 'لم يتم العثور على مايكروفون متصل بالجهاز.\n\nتأكد من توصيل المايكروفون أو استخدام جهاز يحتوي على مايكروفون مدمج.';
+    } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+      reason = 'المايكروفون مستخدم من قبل تطبيق آخر.\n\nأغلق التطبيقات الأخرى التي تستخدم المايكروفون وحاول مرة أخرى.';
+    } else {
+      reason = 'تعذر تشغيل المايكروفون.\n\nالخطأ التقني: ' + err.name + ' — ' + err.message;
+    }
+    confirmAction(reason, function(){}, 'danger');
+    return;
+  }
+
+  // حفظ موضع المؤشر في المحرر
+  saveSelectionState();
+
+  // إنشاء كائن التعرف
   recognition = new SpeechRecognition();
   recognition.lang = 'ar-SA';
-  recognition.continuous = true;
-  recognition.interimResults = true;
-
-  let finalTranscript = '';
+  recognition.continuous = false;       // ← false للتوافق مع متصفحات الهاتف
+  recognition.interimResults = false;   // ← false لتجنب مشاكل الهاتف
+  recognition.maxAlternatives = 1;
 
   recognition.onstart = function() {
     isRecording = true;
@@ -932,49 +1286,82 @@ function toggleSpeech() {
   };
 
   recognition.onresult = function(event) {
-    let interim = '';
+    let transcript = '';
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        finalTranscript += transcript + ' ';
-        insertTextAtCursor(transcript + ' ');
-      } else {
-        interim += transcript;
-      }
+      transcript += event.results[i][0].transcript;
+    }
+    if (transcript.trim()) {
+      insertTextAtCursor(transcript + ' ');
     }
   };
 
   recognition.onerror = function(event) {
-    console.error('Speech error:', event.error);
-    if (event.error === 'not-allowed') {
-      showToast('❌ لم يتم منح إذن الوصول للمايكروفون. يرجى السماح من إعدادات المتصفح.', 'error');
-    } else if (event.error === 'no-speech') {
-      showToast('⚠️ لم يتم رصد أي كلام. حاول مرة أخرى.', 'error');
-    } else {
-      showToast('❌ خطأ في التعرف على الصوت: ' + event.error, 'error');
+    console.error('Speech recognition error:', event.error);
+
+    // لا نوقف عند أخطاء "no-speech" أو "aborted" — نعيد المحاولة
+    if (event.error === 'no-speech' || event.error === 'aborted') {
+      // إعادة التشغيل تلقائياً
+      return;
     }
+
+    let reason = '';
+    switch (event.error) {
+      case 'not-allowed':
+        reason = 'لم يتم منح إذن الوصول للمايكروفون.\n\nيرجى السماح من إعدادات المتصفح.';
+        break;
+      case 'network':
+        reason = 'خطأ في الاتصال بالشبكة.\n\nالتعرف على الصوت يحتاج اتصال بالإنترنت. تحقق من اتصالك وحاول مرة أخرى.';
+        break;
+      case 'audio-capture':
+        reason = 'تعذر التقاط الصوت من المايكروفون.\n\nتأكد من أن المايكروفون يعمل بشكل صحيح.';
+        break;
+      case 'service-not-allowed':
+        reason = 'خدمة التعرف على الصوت غير متاحة في متصفحك.\n\nجرّب Google Chrome.';
+        break;
+      case 'language-not-supported':
+        reason = 'اللغة العربية غير مدعومة في هذا المتصفح.\n\nجرّب متصفح Google Chrome.';
+        break;
+      default:
+        reason = 'خطأ في التعرف على الصوت.\n\nنوع الخطأ: ' + event.error;
+    }
+
     stopSpeech();
+    confirmAction(reason, function(){}, 'danger');
   };
 
   recognition.onend = function() {
-    // إعادة التشغيل تلقائياً إذا كان الزر لا يزال مفعلاً
+    // إعادة التشغيل تلقائياً إذا كان الزر لا يزال في وضع التشغيل
     if (isRecording) {
-      try { recognition.start(); } catch(e) { stopSpeech(); }
+      try {
+        setTimeout(function() {
+          if (isRecording && recognition) {
+            recognition.start();
+          }
+        }, 200);  // تأخير قصير لتجنب الأخطاء في بعض المتصفحات
+      } catch(e) {
+        stopSpeech();
+      }
     }
   };
 
   try {
     recognition.start();
   } catch(e) {
-    showToast('❌ فشل تشغيل المايكروفون', 'error');
+    confirmAction(
+      'فشل تشغيل المايكروفون.\n\nالخطأ: ' + e.message,
+      function(){},
+      'danger'
+    );
   }
 }
 
 function stopSpeech() {
   isRecording = false;
   if (recognition) {
-    recognition.onend = null;
-    recognition.abort();
+    try {
+      recognition.onend = null;   // منع إعادة التشغيل التلقائي
+      recognition.abort();
+    } catch(e) { /* تجاهل */ }
     recognition = null;
   }
   document.getElementById('micBtn').classList.remove('recording');
@@ -984,9 +1371,14 @@ function stopSpeech() {
 
 function insertTextAtCursor(text) {
   editor.focus();
+
+  // محاولة استرجاع الموضع المحفوظ أولاً
+  if (savedSelection) {
+    restoreSelectionState();
+  }
+
   const sel = window.getSelection();
   if (sel.rangeCount > 0) {
-    // التحقق من أن التحديد داخل المحرر
     let node = sel.anchorNode;
     let insideEditor = false;
     while (node) {
@@ -1002,11 +1394,26 @@ function insertTextAtCursor(text) {
       range.setEndAfter(textNode);
       sel.removeAllRanges();
       sel.addRange(range);
+      // تحديث الموضع المحفوظ
+      savedSelection = range.cloneRange();
       return;
     }
   }
   // إذا لم يكن هناك تحديد في المحرر، أضف النص في النهاية
   editor.innerHTML += text;
+  // ضع المؤشر في النهاية
+  placeCaretAtEnd();
+}
+
+function placeCaretAtEnd() {
+  editor.focus();
+  const sel = window.getSelection();
+  const range = document.createRange();
+  range.selectNodeContents(editor);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
+  savedSelection = range.cloneRange();
 }
 
 /* ═══════════════════════════════════════════
@@ -1032,6 +1439,11 @@ document.addEventListener('keydown', function(e) {
         fmt('underline');
         break;
     }
+  }
+  // حذف الصورة المحددة بزر Delete أو Backspace
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedImage) {
+    e.preventDefault();
+    deleteSelectedImage();
   }
 });
 
