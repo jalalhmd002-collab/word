@@ -2615,8 +2615,12 @@
           openVoiceFallback('متصفحك الحالي لا يدعم الإملاء الصوتي المباشر.');
           return;
         }
+        if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+          location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+          return;
+        }
         if (window.isSecureContext === false) {
-          openVoiceFallback('المتصفح يمنع تشغيل الميكروفون عند فتح الملف محلياً (file://) ويتطلب رابط HTTPS.');
+          openVoiceFallback('الصفحة مفتوحة الآن ببروتوكول غير آمن (' + location.protocol + ')، والمتصفح يشترط فتحها عبر رابط https:// لتشغيل الميكروفون.');
           return;
         }
         if (!savedRange || !editor.contains(savedRange.commonAncestorContainer)) {
