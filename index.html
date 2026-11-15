@@ -1,2913 +1,1056 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JH Word A4 — تصميم أبو حازم</title>
-  <style>
-    :root {
-      --word-blue: #185abd;
-      --word-blue-soft: rgba(24, 90, 189, 0.08);
-      --word-blue-border: rgba(24, 90, 189, 0.35);
-      --bg-canvas: #f3f2f1;
-      --bg-ribbon: #ffffff;
-      --text-primary: #201f1e;
-      --text-secondary: #605e5c;
-      --border-subtle: #e1dfdd;
-      --border-control: #d2d0ce;
-      --danger: #c50f1f;
-      --danger-soft: rgba(197, 15, 31, 0.08);
-      --shadow-paper: 0 3px 14px rgba(0, 0, 0, 0.07);
-      --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
-      --font-ui: "Segoe UI", system-ui, -apple-system, Tahoma, Arial, sans-serif;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mini Word — محرر نصوص عربي</title>
 
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+<!-- خطوط جوجل العربية -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 
-    html, body {
-      margin: 0; padding: 0; min-height: 100%;
-      background: var(--bg-canvas);
-      color: var(--text-primary);
-      font-family: var(--font-ui);
-      overflow-x: hidden;
-      -webkit-overflow-scrolling: touch;
-    }
+<!-- مكتبة html2pdf.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
 
-    body.modal-open { overflow: hidden; }
-    button, select, input { touch-action: manipulation; font-family: inherit; }
+<style>
+/* ═══════════════════════════════════════════
+   CSS Variables & Reset
+   ═══════════════════════════════════════════ */
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --bg: #f0f2f5;
+  --toolbar-bg: #ffffff;
+  --paper-bg: #ffffff;
+  --border: #d1d5db;
+  --text: #1f2937;
+  --text-light: #6b7280;
+  --shadow: 0 2px 8px rgba(0,0,0,.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.15);
+  --radius: 8px;
+  --toolbar-height: auto;
+}
 
-    /* ---------- Header ---------- */
-    .word-header {
-      position: sticky; top: 0; z-index: 60;
-      background: var(--bg-ribbon);
-      border-top: 3px solid var(--word-blue);
-      border-bottom: 1px solid var(--border-subtle);
-    }
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-    .title-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 8px; padding: 8px 12px;
-    }
+body {
+  font-family: 'Cairo', 'Tajawal', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  direction: rtl;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
 
-    .brand-section { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 auto; }
+/* ═══════════════════════════════════════════
+   Top File Bar
+   ═══════════════════════════════════════════ */
+.file-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
 
-    .jh-menu-btn {
-      height: 36px; padding: 0 11px; border-radius: 7px;
-      border: 1px solid var(--word-blue-border);
-      background: var(--word-blue-soft); color: var(--word-blue);
-      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-      font-weight: 800; font-size: 14px; cursor: pointer; flex-shrink: 0;
-    }
-    .jh-menu-btn:hover { background: rgba(24, 90, 189, 0.15); }
-    .jh-menu-btn svg { width: 14px; height: 14px; }
+.file-bar .app-title {
+  font-weight: 700;
+  font-size: 15px;
+  margin-left: 8px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
-    .doc-meta { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.file-bar .app-title svg { width: 20px; height: 20px; }
 
-    .doc-title-input {
-      font-size: 15px; font-weight: 700; color: var(--text-primary);
-      background: transparent; border: 1px solid transparent; border-radius: 5px;
-      padding: 4px 7px; width: 100%; max-width: 280px; outline: none;
-    }
-    .doc-title-input:focus { border-color: var(--word-blue); background: #ffffff; }
+.file-bar button {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background .2s;
+}
 
-    .doc-subtitle {
-      font-size: 11px; color: var(--text-secondary); padding-inline-start: 7px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+.file-bar button:hover,
+.file-bar button:active { background: rgba(255,255,255,.3); }
 
-    .file-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.file-bar .save-info {
+  font-size: 11px;
+  opacity: .8;
+  margin-right: auto;
+  white-space: nowrap;
+}
 
-    .btn-fluent {
-      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-      height: 36px; padding: 0 11px; border-radius: 7px;
-      border: 1px solid var(--border-control); background: #ffffff;
-      color: var(--text-primary); font-size: 12.5px; font-weight: 600;
-      cursor: pointer; white-space: nowrap;
-    }
-    .btn-fluent:hover { background: #f3f2f1; }
-    .btn-fluent.primary-outline { border-color: var(--word-blue-border); color: var(--word-blue); background: var(--word-blue-soft); }
-    .btn-fluent.danger-outline { border-color: rgba(197, 15, 31, 0.35); color: var(--danger); background: var(--danger-soft); }
-    .btn-fluent.recording { border-color: rgba(197, 15, 31, 0.55); color: var(--danger); background: var(--danger-soft); }
-    .mic-dot {
-      width: 9px; height: 9px; border-radius: 50%; background: var(--danger); flex-shrink: 0;
-      animation: micPulse 1.1s ease-in-out infinite;
-    }
-    @keyframes micPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.82); } }
-    .dictation-bar {
-      position: fixed; bottom: calc(44px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%);
-      z-index: 85; display: none; align-items: center; gap: 8px;
-      width: min(520px, calc(100vw - 20px)); padding: 7px 10px;
-      background: #ffffff; border: 1px solid var(--border-control); border-top: 2.5px solid var(--danger);
-      border-radius: 10px; box-shadow: var(--shadow-float); font-size: 13px;
-    }
-    .dictation-bar.open { display: flex; animation: miniPop 0.14s ease-out; }
-    .dictation-text {
-      flex: 1 1 auto; min-width: 0; color: var(--text-primary); font-weight: 600;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .btn-fluent svg, .tool-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+/* ═══════════════════════════════════════════
+   Formatting Toolbar
+   ═══════════════════════════════════════════ */
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  background: var(--toolbar-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  box-shadow: var(--shadow);
+}
 
-    /* ---------- Dropdowns ---------- */
-    .fluent-dropdown {
-      position: fixed; z-index: 95; min-width: 210px;
-      max-width: calc(100vw - 20px); max-height: 65vh; overflow-y: auto;
-      background: #ffffff; border: 1px solid var(--border-control);
-      border-top: 2.5px solid var(--word-blue); border-radius: 9px;
-      box-shadow: var(--shadow-float); padding: 5px; display: none;
-    }
-    .fluent-dropdown.open { display: block; animation: miniPop 0.12s ease-out; }
+.toolbar::-webkit-scrollbar { height: 3px; }
+.toolbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
 
-    .dropdown-item {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      width: 100%; padding: 9px 11px; border: none; border-radius: 6px;
-      background: transparent; color: var(--text-primary);
-      font-size: 13.5px; font-weight: 600; text-align: right; cursor: pointer;
-    }
-    .dropdown-item:hover { background: var(--word-blue-soft); color: var(--word-blue); }
-    .dropdown-item.selected { background: var(--word-blue-soft); color: var(--word-blue); }
-    .dropdown-item svg { width: 16px; height: 16px; flex-shrink: 0; }
-    .dropdown-divider { height: 1px; background: var(--border-subtle); margin: 4px 6px; }
+.toolbar .sep {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
 
-    /* ---------- Ribbon ---------- */
-    .ribbon-container {
-      background: #f8f8f7; padding: 8px 12px; display: none;
-      flex-wrap: wrap; align-items: stretch; gap: 7px; border-top: 1px solid var(--border-subtle);
-    }
-    .ribbon-container.open { display: flex; }
+.toolbar button,
+.toolbar select {
+  background: #f3f4f6;
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 34px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+}
 
-    .ribbon-group {
-      display: flex; flex-direction: column; justify-content: space-between;
-      background: #ffffff; border: 1px solid var(--border-subtle);
-      border-radius: 8px; padding: 4px 6px; flex-shrink: 0; gap: 3px;
-    }
-    .ribbon-controls { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
-    .ribbon-label { font-size: 10px; color: var(--text-secondary); text-align: center; user-select: none; line-height: 1.1; }
+.toolbar button:hover,
+.toolbar button:active { background: #e5e7eb; }
+.toolbar button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-    .tool-btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-      min-width: 34px; height: 34px; padding: 0 7px; border-radius: 6px;
-      border: 1px solid transparent; background: transparent;
-      color: var(--text-primary); font-size: 13px; font-weight: 600;
-      cursor: pointer; flex-shrink: 0; user-select: none;
-    }
-    .tool-btn:hover:not(:disabled) { background: #edebe9; border-color: var(--border-control); }
-    .tool-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .tool-btn.active { background: var(--word-blue-soft); border-color: var(--word-blue-border); color: var(--word-blue); }
+.toolbar select {
+  padding: 6px 6px 6px 24px;
+  appearance: auto;
+  -webkit-appearance: auto;
+  font-size: 13px;
+  max-width: 130px;
+}
 
-    .font-picker-btn {
-      height: 34px; padding: 0 8px; border-radius: 6px;
-      border: 1px solid var(--border-control); background: #ffffff;
-      color: var(--text-primary); font-size: 12.5px; font-weight: 600;
-      cursor: pointer; outline: none; flex-shrink: 0;
-      display: inline-flex; align-items: center; gap: 6px;
-      min-width: 118px; justify-content: space-between;
-    }
+.toolbar input[type="color"] {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 2px;
+  background: #f3f4f6;
+  flex-shrink: 0;
+}
 
-    .color-picker-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; }
-    .color-input-overlay { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
-    .color-bar { display: block; width: 15px; height: 3px; border-radius: 1px; margin-top: 2px; }
+.toolbar .mic-btn.recording {
+  background: var(--danger) !important;
+  color: #fff !important;
+  animation: pulse 1s infinite;
+}
 
-    /* ---------- Workspace / A4 ---------- */
-    .workspace {
-      display: flex; flex-direction: column; align-items: center;
-      padding: 14px 10px 80px; touch-action: pan-y;
-    }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.5); }
+  50%      { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+}
 
-    .a4-page {
-      width: 100%; max-width: 210mm; min-height: 72vh;
-      background: #ffffff; color: #111827;
-      border: 1px solid #d2d0ce; box-shadow: var(--shadow-paper);
-      padding: 20mm 18mm; outline: none;
-      font-family: Tahoma, Arial, sans-serif;
-      font-size: 14pt; line-height: 1.75;
-      direction: rtl; text-align: right;
-      word-wrap: break-word; overflow-wrap: break-word;
-      touch-action: pan-y;
-    }
+/* ═══════════════════════════════════════════
+   Editor / Paper Area
+   ═══════════════════════════════════════════ */
+.editor-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 20px 10px 60px;
+  min-height: calc(100vh - 140px);
+}
 
-    .a4-page:empty::before { content: attr(data-placeholder); color: #a19f9d; pointer-events: none; }
+.paper {
+  background: var(--paper-bg);
+  width: 100%;
+  max-width: 800px;
+  min-height: 1000px;
+  padding: 50px 40px;
+  border-radius: 4px;
+  box-shadow: var(--shadow-lg);
+  outline: none;
+  font-size: 16px;
+  line-height: 1.9;
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', sans-serif;
+  caret-color: var(--primary);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
 
-    .a4-page h1 { font-size: 22pt; margin: 0.4em 0; color: #111827; }
-    .a4-page h2 { font-size: 18pt; margin: 0.4em 0; color: #1f2937; }
-    .a4-page h3 { font-size: 15pt; margin: 0.4em 0; color: #374151; }
-    .a4-page p { margin: 0 0 0.65em; }
-    .a4-page ul, .a4-page ol { margin: 0 0 0.65em; padding-inline-start: 26px; }
+.paper:empty::before {
+  content: "ابدأ الكتابة هنا...";
+  color: #9ca3af;
+  pointer-events: none;
+}
 
-    .a4-page img { max-width: 100%; height: auto; border-radius: 3px; cursor: pointer; display: inline-block; }
-    .a4-page img.selected-img { outline: 2.5px solid var(--word-blue); outline-offset: 2px; }
+.paper:focus { box-shadow: 0 0 0 3px rgba(37,99,235,.2), var(--shadow-lg); }
 
-    .a4-page table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-    .a4-page th, .a4-page td { border: 1px solid #8a8886; padding: 7px 10px; min-width: 44px; text-align: inherit; }
-    .a4-page th { background: #f3f2f1; font-weight: 700; }
+.paper img { max-width: 100%; height: auto; }
 
-    /* ---------- Image toolbar ---------- */
-    .image-toolbar {
-      position: fixed; z-index: 81; display: none; align-items: center; gap: 4px;
-      padding: 5px 8px; background: #ffffff; border: 1px solid var(--border-control);
-      border-top: 2.5px solid var(--word-blue); border-radius: 8px;
-      box-shadow: var(--shadow-float); flex-wrap: wrap; max-width: calc(100vw - 16px);
-    }
-    .image-toolbar.visible { display: flex; }
-    .image-toolbar .tool-btn { height: 30px; font-size: 12px; padding: 0 8px; }
+/* ═══════════════════════════════════════════
+   Custom Modal
+   ═══════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .25s, visibility .25s;
+}
 
-    @keyframes miniPop { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+.modal-overlay.show { opacity: 1; visibility: visible; }
 
-    /* ---------- Status bar ---------- */
-    .status-bar {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      padding: 6px 14px calc(6px + env(safe-area-inset-bottom, 0px));
-      background: #ffffff; border-top: 1px solid var(--border-subtle);
-      font-size: 12px; color: var(--text-secondary); flex-wrap: wrap;
-    }
-    .status-metrics { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .save-badge { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; color: var(--text-primary); }
-    .save-dot { width: 7px; height: 7px; border-radius: 50%; background: #107c10; }
+.modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 24px 20px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  transform: scale(.9);
+  transition: transform .25s;
+}
 
-    /* ---------- Preview ---------- */
-    .preview-overlay { position: fixed; inset: 0; z-index: 110; background: #e1dfdd; display: none; flex-direction: column; }
-    .preview-overlay.open { display: flex; }
-    .preview-topbar {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      padding: 10px 14px; background: #ffffff; border-top: 3px solid var(--word-blue);
-      border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap;
-    }
-    .preview-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-    .preview-body { flex: 1; overflow: auto; padding: 14px 10px 40px; display: flex; justify-content: center; align-items: flex-start; }
-    .preview-stage { flex-shrink: 0; position: relative; }
-    .preview-sheet {
-      width: 794px; min-height: 1123px; flex-shrink: 0; background: #ffffff; color: #111827;
-      border: 1px solid #d2d0ce; box-shadow: var(--shadow-paper); padding: 75px 68px;
-      font-family: Tahoma, Arial, sans-serif; font-size: 14pt; line-height: 1.75;
-      word-wrap: break-word; transform-origin: top right;
-    }
-    .preview-sheet img { max-width: 100%; height: auto; }
-    .preview-sheet table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-    .preview-sheet th, .preview-sheet td { border: 1px solid #8a8886; padding: 7px 10px; }
-    .preview-sheet th { background: #f3f2f1; font-weight: 700; }
+.modal-overlay.show .modal-box { transform: scale(1); }
 
-    /* ---------- Modals ---------- */
-    .modal-backdrop {
-      position: fixed; inset: 0; z-index: 120; background: rgba(0, 0, 0, 0.42);
-      display: none; align-items: center; justify-content: center; padding: 16px;
-    }
-    .modal-backdrop.open { display: flex; }
-    .modal-card {
-      width: 100%; max-width: 390px; background: #ffffff; color: var(--text-primary);
-      border-radius: 10px; border: 1px solid var(--border-control);
-      border-top: 3px solid var(--word-blue); padding: 20px; box-shadow: var(--shadow-float);
-    }
-    .modal-title { margin: 0 0 8px; font-size: 16px; font-weight: 700; }
-    .modal-desc { margin: 0 0 14px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; }
-    .modal-input {
-      width: 100%; height: 38px; padding: 0 10px; border-radius: 6px;
-      border: 1px solid var(--border-control); font-size: 14px; font-weight: 600;
-      color: var(--text-primary); margin-bottom: 16px; outline: none;
-    }
-    .modal-input:focus { border-color: var(--word-blue); }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.modal-box .modal-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
 
-    /* ---------- Toast ---------- */
-    .toast {
-      position: fixed; bottom: 52px; left: 50%; transform: translateX(-50%) translateY(12px);
-      z-index: 130; background: #ffffff; color: var(--text-primary);
-      padding: 9px 18px; border-radius: 8px; border: 1px solid var(--border-control);
-      border-top: 3px solid var(--word-blue); font-size: 13px; font-weight: 700;
-      opacity: 0; pointer-events: none; transition: all 0.2s ease;
-      white-space: nowrap; box-shadow: var(--shadow-float); max-width: 92vw;
-      overflow: hidden; text-overflow: ellipsis;
-    }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.modal-box h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
 
-    @media (max-width: 768px) {
-      .doc-subtitle { display: none; }
-      .ribbon-label { display: none; }
-      .ribbon-container {
-        margin: 6px; padding: 7px; gap: 6px;
-        border: 1px solid var(--border-subtle); border-top: 2px solid var(--word-blue); border-radius: 10px;
-      }
-      .workspace { padding: 8px 6px 76px; }
-      .a4-page { padding: 16px 14px; font-size: 13pt; border-radius: 5px; }
-      .status-bar { font-size: 11px; padding: 5px 10px calc(5px + env(safe-area-inset-bottom, 0px)); }
-    }
+.modal-box p {
+  font-size: 14px;
+  color: var(--text-light);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
 
-    @media print {
-      @page { size: A4 portrait; margin: 15mm; }
-      html, body { background: #ffffff !important; margin: 0 !important; padding: 0 !important; }
-      .word-header, .status-bar, .image-toolbar, .dictation-bar, .modal-backdrop, .toast, .preview-overlay, .fluent-dropdown { display: none !important; }
-      .workspace { padding: 0 !important; margin: 0 !important; display: block !important; }
-      .a4-page {
-        width: 100% !important; max-width: none !important; min-height: auto !important;
-        padding: 0 !important; margin: 0 !important; border: none !important; box-shadow: none !important;
-      }
-      .a4-page img.selected-img { outline: none !important; }
-    }
-  </style>
+.modal-box .modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.modal-box .btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.modal-box .btn-confirm {
+  background: var(--primary);
+  color: #fff;
+}
+
+.modal-box .btn-confirm:hover { background: var(--primary-hover); }
+
+.modal-box .btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.modal-box .btn-danger:hover { background: #dc2626; }
+
+.modal-box .btn-cancel {
+  background: #f3f4f6;
+  color: var(--text);
+}
+
+.modal-box .btn-cancel:hover { background: #e5e7eb; }
+
+/* ═══════════════════════════════════════════
+   Preview Modal
+   ═══════════════════════════════════════════ */
+.preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 10000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .25s, visibility .25s;
+}
+
+.preview-overlay.show { opacity: 1; visibility: visible; }
+
+.preview-container {
+  background: #fff;
+  width: 100%;
+  max-width: 820px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  margin: 20px 0;
+}
+
+.preview-header {
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+}
+
+.preview-header h3 { font-size: 16px; }
+
+.preview-header button {
+  background: rgba(255,255,255,.2);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.preview-header button:hover { background: rgba(255,255,255,.35); }
+
+.preview-body {
+  padding: 50px 40px;
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', sans-serif;
+  font-size: 16px;
+  line-height: 1.9;
+  min-height: 500px;
+}
+
+/* ═══════════════════════════════════════════
+   Toast Notification
+   ═══════════════════════════════════════════ */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #1f2937;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  z-index: 99999;
+  opacity: 0;
+  transition: all .35s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.success { background: #16a34a; }
+.toast.error   { background: #dc2626; }
+
+/* ═══════════════════════════════════════════
+   Mobile Responsive
+   ═══════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .file-bar { padding: 5px 6px; gap: 3px; }
+  .file-bar .app-title { font-size: 13px; margin-left: 4px; }
+  .file-bar button { padding: 6px 8px; font-size: 11px; }
+
+  .toolbar { padding: 4px 6px; gap: 3px; }
+  .toolbar button,
+  .toolbar select { min-width: 32px; min-height: 32px; padding: 5px 6px; font-size: 13px; }
+  .toolbar select { max-width: 100px; font-size: 12px; }
+
+  .editor-wrapper { padding: 10px 4px 40px; }
+
+  .paper {
+    padding: 24px 18px;
+    min-height: 600px;
+    border-radius: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    font-size: 15px;
+  }
+
+  .preview-body { padding: 24px 18px; }
+}
+
+/* ═══════════════════════════════════════════
+   Print Styles
+   ═══════════════════════════════════════════ */
+@media print {
+  .file-bar, .toolbar, .toast, .modal-overlay, .preview-overlay { display: none !important; }
+  .editor-wrapper { padding: 0; }
+  .paper {
+    box-shadow: none;
+    max-width: 100%;
+    border-radius: 0;
+    padding: 20px;
+  }
+}
+
+/* Tooltip */
+[data-tooltip] { position: relative; }
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 50%;
+  transform: translateX(50%);
+  background: #1f2937;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+  z-index: 200;
+}
+[data-tooltip]:hover::after { opacity: 1; }
+@media (max-width: 640px) { [data-tooltip]::after { display: none; } }
+</style>
 </head>
 <body>
 
-  <header class="word-header">
-    <div class="title-bar">
-      <div class="brand-section">
-        <button type="button" class="jh-menu-btn" id="btnMenuJH" title="قائمة الملف">
-          <span>JH</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <div class="doc-meta">
-          <input type="text" id="docTitle" class="doc-title-input" value="مستند جديد" aria-label="اسم المستند" />
-          <span class="doc-subtitle">محرر مستندات A4 بدون إنترنت • تصميم أبو حازم</span>
-        </div>
-      </div>
-      <div class="file-actions">
-        <button type="button" class="btn-fluent" id="btnVoiceDictate" title="الإملاء الصوتي عبر الميكروفون">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-          <span id="voiceBtnLabel">صوت</span>
-        </button>
-        <button type="button" class="btn-fluent" id="btnToggleFormat" title="إظهار أو إخفاء أدوات التنسيق">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
-          <span>تنسيق</span>
-        </button>
-      </div>
-    </div>
+<!-- ═══════════════════════════════════════
+     شريط الملفات العلوي
+     ═══════════════════════════════════════ -->
+<div class="file-bar">
+  <span class="app-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    Mini Word
+  </span>
 
-    <div class="ribbon-container" id="ribbonPanel" role="toolbar" aria-label="شريط أدوات التحرير">
-      <div class="ribbon-group">
-        <div class="ribbon-controls">
-          <button type="button" class="tool-btn" id="btnUndo" title="تراجع" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-          </button>
-          <button type="button" class="tool-btn" id="btnRedo" title="إعادة" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
-          </button>
-        </div>
-        <span class="ribbon-label">تراجع</span>
-      </div>
+  <button onclick="confirmAction('هل تريد إنشاء مستند جديد؟\nسيتم مسح المحتوى الحالي.', newDocument, 'danger')" data-tooltip="مستند جديد">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+    جديد
+  </button>
 
-      <div class="ribbon-group">
-        <div class="ribbon-controls">
-          <button type="button" class="font-picker-btn" id="blockPickerBtn" style="min-width:86px;" title="نمط الفقرة">
-            <span id="blockPickerLabel">نص عادي</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <button type="button" class="font-picker-btn" id="fontPickerBtn" title="نوع الخط">
-            <span id="fontPickerLabel">Tahoma</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <button type="button" class="font-picker-btn" id="sizePickerBtn" style="min-width:64px;" title="حجم الخط">
-            <span id="sizePickerLabel">14</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-        </div>
-        <span class="ribbon-label">الخط</span>
-      </div>
+  <button onclick="confirmAction('هل تريد حفظ المستند في ذاكرة المتصفح؟', saveDocument, 'confirm')" data-tooltip="حفظ محلي">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    حفظ
+  </button>
 
-      <div class="ribbon-group">
-        <div class="ribbon-controls">
-          <button type="button" class="tool-btn" data-tag="B" title="غامق"><b>B</b></button>
-          <button type="button" class="tool-btn" data-tag="I" title="مائل"><i>I</i></button>
-          <button type="button" class="tool-btn" data-tag="U" title="تسطير"><u>U</u></button>
-          <button type="button" class="tool-btn" data-tag="S" title="يتوسطه خط"><s>S</s></button>
+  <button onclick="confirmAction('هل تريد تنزيل المستند بصيغة Word؟', exportWord, 'confirm')" data-tooltip="تصدير Word">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    حفظ كـ Word
+  </button>
 
-          <div class="color-picker-btn" title="لون الخط">
-            <button type="button" class="tool-btn" style="flex-direction:column; line-height:1;" tabindex="-1">
-              <span style="font-size:13px;">A</span>
-              <span class="color-bar" id="foreColorBar" style="background:#111827;"></span>
-            </button>
-            <input type="color" id="foreColorInput" class="color-input-overlay" value="#111827" aria-label="لون الخط" />
-          </div>
+  <button onclick="confirmAction('هل تريد تصدير المستند بصيغة PDF؟', exportPDF, 'confirm')" data-tooltip="تصدير PDF">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><text x="12" y="15" text-anchor="middle" font-size="8" fill="currentColor" stroke="none" font-weight="bold">PDF</text></svg>
+    حفظ كـ PDF
+  </button>
 
-          <div class="color-picker-btn" title="لون التظليل">
-            <button type="button" class="tool-btn" style="flex-direction:column; line-height:1;" tabindex="-1">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
-              <span class="color-bar" id="hiliteColorBar" style="background:#fef08a;"></span>
-            </button>
-            <input type="color" id="hiliteColorInput" class="color-input-overlay" value="#fef08a" aria-label="لون التظليل" />
-          </div>
+  <button onclick="openPreview()" data-tooltip="معاينة الطباعة">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    معاينة
+  </button>
 
-          <button type="button" class="tool-btn" id="btnClearFormat" title="مسح التنسيق">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-          </button>
-        </div>
-        <span class="ribbon-label">تنسيق</span>
-      </div>
+  <span class="save-info" id="saveInfo"></span>
+</div>
 
-      <div class="ribbon-group">
-        <div class="ribbon-controls">
-          <button type="button" class="tool-btn" id="btnDirRtl" title="اتجاه من اليمين لليسار">RTL</button>
-          <button type="button" class="tool-btn" id="btnDirLtr" title="اتجاه من اليسار لليمين">LTR</button>
+<!-- ═══════════════════════════════════════
+     شريط أدوات التنسيق
+     ═══════════════════════════════════════ -->
+<div class="toolbar" id="toolbar">
 
-          <button type="button" class="tool-btn" data-align="right" title="محاذاة لليمين">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="9" y2="12"/><line x1="21" y1="18" x2="5" y2="18"/></svg>
-          </button>
-          <button type="button" class="tool-btn" data-align="center" title="توسيط">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="6" x2="3" y2="6"/><line x1="18" y1="12" x2="6" y2="12"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
-          </button>
-          <button type="button" class="tool-btn" data-align="left" title="محاذاة لليسار">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="6" x2="3" y2="6"/><line x1="15" y1="12" x2="3" y2="12"/><line x1="19" y1="18" x2="3" y2="18"/></svg>
-          </button>
-          <button type="button" class="tool-btn" data-align="justify" title="ضبط">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
-          </button>
+  <!-- نوع الخط -->
+  <select id="fontFamily" onchange="applyFontFamily(this.value)" data-tooltip="نوع الخط">
+    <option value="Cairo">Cairo</option>
+    <option value="Tajawal">Tajawal</option>
+    <option value="Amiri">Amiri</option>
+    <option value="Arial">Arial</option>
+    <option value="Tahoma">Tahoma</option>
+    <option value="Times New Roman">Times New Roman</option>
+  </select>
 
-          <button type="button" class="tool-btn" data-list="insertUnorderedList" title="تعداد نقطي">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
-          </button>
-          <button type="button" class="tool-btn" data-list="insertOrderedList" title="تعداد رقمي">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
-          </button>
-        </div>
-        <span class="ribbon-label">فقرة</span>
-      </div>
+  <!-- حجم الخط -->
+  <select id="fontSize" onchange="applyFontSize(this.value)" data-tooltip="حجم الخط">
+    <option value="1">10</option>
+    <option value="2">12</option>
+    <option value="3" selected>14</option>
+    <option value="4">18</option>
+    <option value="5">24</option>
+    <option value="6">32</option>
+    <option value="7">48</option>
+  </select>
 
-      <div class="ribbon-group">
-        <div class="ribbon-controls">
-          <button type="button" class="tool-btn" id="btnInsertImage" title="إضافة صورة">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <span>صورة</span>
-          </button>
-          <button type="button" class="tool-btn" id="btnInsertTable" title="إدراج جدول">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
-            <span>جدول</span>
-          </button>
-        </div>
-        <span class="ribbon-label">إدراج</span>
-      </div>
-    </div>
-  </header>
+  <button onclick="changeFontSizeStep(1)" data-tooltip="تكبير الخط" style="font-weight:700;">A+</button>
+  <button onclick="changeFontSizeStep(-1)" data-tooltip="تصغير الخط" style="font-size:12px;">A−</button>
 
-  <div id="jhDropdown" class="fluent-dropdown" role="menu" aria-label="قائمة الملف">
-    <button type="button" class="dropdown-item" id="menuBtnNew" role="menuitem">
-      <span style="display:inline-flex;align-items:center;gap:8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-        <span>مستند جديد</span>
-      </span>
-    </button>
-    <button type="button" class="dropdown-item" id="menuBtnOpen" role="menuitem">
-      <span style="display:inline-flex;align-items:center;gap:8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        <span>فتح مستند</span>
-      </span>
-    </button>
-    <div class="dropdown-divider"></div>
-    <button type="button" class="dropdown-item" id="menuBtnPreview" role="menuitem">
-      <span style="display:inline-flex;align-items:center;gap:8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        <span>معاينة A4</span>
-      </span>
-    </button>
-    <div class="dropdown-divider"></div>
-    <button type="button" class="dropdown-item" id="menuBtnSaveWord" role="menuitem">
-      <span style="display:inline-flex;align-items:center;gap:8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        <span>حفظ بصيغة Word (.docx)</span>
-      </span>
-    </button>
-    <button type="button" class="dropdown-item" id="menuBtnSavePdf" role="menuitem">
-      <span style="display:inline-flex;align-items:center;gap:8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <span>حفظ بصيغة PDF</span>
-      </span>
-    </button>
-    <div class="dropdown-divider"></div>
-    <button type="button" class="dropdown-item" id="menuBtnQuickSave" role="menuitem">
-      <span style="display:inline-flex;align-items:center;gap:8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-        <span>حفظ</span>
-      </span>
-    </button>
-    <button type="button" class="dropdown-item" id="menuBtnCloseMenu" role="menuitem" style="color: var(--danger);">
-      <span style="display:inline-flex;align-items:center;gap:8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        <span>إغلاق</span>
-      </span>
-    </button>
-  </div>
+  <div class="sep"></div>
 
-  <div id="blockDropdown" class="fluent-dropdown" role="listbox" aria-label="أنماط الفقرة"></div>
-  <div id="fontDropdown" class="fluent-dropdown" role="listbox" aria-label="قائمة الخطوط"></div>
-  <div id="sizeDropdown" class="fluent-dropdown" role="listbox" aria-label="أحجام الخط"></div>
+  <!-- تنسيق النص -->
+  <button onclick="fmt('bold')" data-tooltip="عريض" style="font-weight:800;">B</button>
+  <button onclick="fmt('italic')" data-tooltip="مائل" style="font-style:italic;">I</button>
+  <button onclick="fmt('underline')" data-tooltip="تسطير" style="text-decoration:underline;">U</button>
+  <button onclick="fmt('strikeThrough')" data-tooltip="يتوسطه خط" style="text-decoration:line-through;">S</button>
 
-  <input type="file" id="imageFileInput" accept="image/*" hidden />
-  <input type="file" id="openDocInput" accept=".docx,.doc,.html,.htm,.txt" hidden />
+  <div class="sep"></div>
 
-  <main class="workspace">
-    <div id="editor"
-         class="a4-page"
-         contenteditable="true"
-         spellcheck="true"
-         data-placeholder="ابدأ الكتابة هنا... حدد أي كلمة أو فقرة ثم استخدم أدوات التنسيق.">
-      <h2 style="text-align: right;">بسم الله الرحمن الرحيم</h2>
-      <p>مرحباً بك في محرر النصوص السريع بصيغة <strong>A4</strong>. يمكنك الكتابة بحرية على الجوال أو الكمبيوتر بدون إنترنت، والتصدير بصيغتي Word ‏(.docx)‏ وPDF تفتحان على أغلب الجوالات.</p>
-    </div>
-  </main>
+  <!-- لون النص -->
+  <label data-tooltip="لون النص" style="position:relative;display:flex;align-items:center;cursor:pointer;">
+    <span style="font-size:16px;font-weight:700;color:var(--text);">A</span>
+    <input type="color" id="foreColor" value="#000000" onchange="applyColor('foreColor', this.value)" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
+  </label>
 
-  <div id="imageToolbar" class="image-toolbar" role="toolbar" aria-label="أدوات الصورة">
-    <button type="button" class="tool-btn" data-img-size="25%">25%</button>
-    <button type="button" class="tool-btn" data-img-size="50%">50%</button>
-    <button type="button" class="tool-btn" data-img-size="75%">75%</button>
-    <button type="button" class="tool-btn" data-img-size="100%">100%</button>
-    <button type="button" class="tool-btn" data-img-align="right">يمين</button>
-    <button type="button" class="tool-btn" data-img-align="center">وسط</button>
-    <button type="button" class="tool-btn" data-img-align="left">يسار</button>
-    <button type="button" class="tool-btn" id="btnDeleteImg" style="color:#c50f1f;">حذف</button>
-  </div>
+  <!-- لون التمييز -->
+  <label data-tooltip="لون التمييز" style="position:relative;display:flex;align-items:center;cursor:pointer;">
+    <span style="font-size:16px;background:#fef08a;padding:0 4px;border-radius:3px;font-weight:700;">A</span>
+    <input type="color" id="hiliteColor" value="#ffff00" onchange="applyColor('hiliteColor', this.value)" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
+  </label>
 
-  <div id="dictationBar" class="dictation-bar" role="status" aria-live="polite">
-    <span class="mic-dot"></span>
-    <span id="dictationText" class="dictation-text">جاري الاستماع... تحدث الآن</span>
-    <button type="button" class="tool-btn" id="btnVoiceLang" title="تبديل لغة الإملاء">عربي</button>
-    <button type="button" class="tool-btn" id="btnVoiceStop" style="color: var(--danger);">إيقاف</button>
-  </div>
+  <div class="sep"></div>
 
-  <footer class="status-bar">
-    <div class="status-metrics">
-      <span class="save-badge"><span class="save-dot"></span> <span id="saveStatusText">محفوظ محلياً</span></span>
-      <span>الكلمات: <strong id="wordCount">0</strong></span>
-      <span>الأحرف: <strong id="charCount">0</strong></span>
-      <span>الحجم: <strong>A4</strong></span>
-    </div>
-    <div>تصميم أبو حازم • JH</div>
-  </footer>
+  <!-- المحاذاة -->
+  <button onclick="fmt('justifyRight')" data-tooltip="محاذاة يمين">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="10" x2="9" y2="10"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="9" y2="18"/></svg>
+  </button>
+  <button onclick="fmt('justifyCenter')" data-tooltip="توسيط">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="6" x2="3" y2="6"/><line x1="17" y1="10" x2="7" y2="10"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="7" y2="18"/></svg>
+  </button>
+  <button onclick="fmt('justifyLeft')" data-tooltip="محاذاة يسار">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="10" x2="15" y2="10"/><line x1="3" y1="14" x2="21" y2="14"/><line x1="3" y1="18" x2="15" y2="18"/></svg>
+  </button>
+  <button onclick="fmt('justifyFull')" data-tooltip="ضبط">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+  </button>
 
-  <div id="previewOverlay" class="preview-overlay" role="dialog" aria-modal="true" aria-label="معاينة A4">
-    <div class="preview-topbar">
-      <div class="preview-title" id="previewDocTitle">معاينة A4</div>
-      <div class="file-actions">
-        <button type="button" class="btn-fluent primary-outline" id="btnPreviewWord">حفظ Word</button>
-        <button type="button" class="btn-fluent primary-outline" id="btnPreviewPdf">حفظ PDF</button>
-        <button type="button" class="btn-fluent" id="btnClosePreview">إغلاق</button>
-      </div>
-    </div>
-    <div class="preview-body">
-      <div class="preview-stage" id="previewStage">
-        <div class="preview-sheet" id="previewSheet"></div>
-      </div>
+  <div class="sep"></div>
+
+  <!-- القوائم -->
+  <button onclick="fmt('insertUnorderedList')" data-tooltip="قائمة نقطية">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1.5" fill="currentColor"/><circle cx="3" cy="12" r="1.5" fill="currentColor"/><circle cx="3" cy="18" r="1.5" fill="currentColor"/></svg>
+  </button>
+  <button onclick="fmt('insertOrderedList')" data-tooltip="قائمة رقمية">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><text x="3" y="8" font-size="7" fill="currentColor" stroke="none">1</text><text x="3" y="14" font-size="7" fill="currentColor" stroke="none">2</text><text x="3" y="20" font-size="7" fill="currentColor" stroke="none">3</text></svg>
+  </button>
+
+  <div class="sep"></div>
+
+  <!-- تراجع / إعادة -->
+  <button onclick="fmt('undo')" data-tooltip="تراجع">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+  </button>
+  <button onclick="fmt('redo')" data-tooltip="إعادة">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
+  </button>
+
+  <div class="sep"></div>
+
+  <!-- الكتابة بالصوت -->
+  <button class="mic-btn" id="micBtn" onclick="toggleSpeech()" data-tooltip="الكتابة بالصوت">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="1" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    <span id="micLabel">مايك</span>
+  </button>
+
+</div>
+
+<!-- ═══════════════════════════════════════
+     منطقة الكتابة
+     ═══════════════════════════════════════ -->
+<div class="editor-wrapper">
+  <div class="paper" id="editor" contenteditable="true" spellcheck="true"></div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     نافذة التأكيد المخصصة
+     ═══════════════════════════════════════ -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-icon" id="modalIcon">⚠️</div>
+    <h3 id="modalTitle">تأكيد الإجراء</h3>
+    <p id="modalMessage">هل أنت متأكد؟</p>
+    <div class="modal-actions">
+      <button class="btn btn-confirm" id="modalConfirmBtn" onclick="modalConfirm()">نعم، متأكد</button>
+      <button class="btn btn-cancel" onclick="closeModal()">إلغاء</button>
     </div>
   </div>
+</div>
 
-  <div id="exportModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="exportModalTitle">
-    <div class="modal-card">
-      <h3 class="modal-title" id="exportModalTitle">حفظ الملف</h3>
-      <p class="modal-desc" id="exportModalDesc">أدخل اسم الملف:</p>
-      <input type="text" id="exportFilenameInput" class="modal-input" placeholder="اسم المستند" />
-      <div class="modal-actions">
-        <button type="button" class="btn-fluent" id="btnCancelExport">إلغاء</button>
-        <button type="button" class="btn-fluent primary-outline" id="btnConfirmExport">تصدير وحفظ</button>
-      </div>
+<!-- ═══════════════════════════════════════
+     نافذة المعاينة
+     ═══════════════════════════════════════ -->
+<div class="preview-overlay" id="previewOverlay">
+  <div class="preview-container">
+    <div class="preview-header">
+      <h3>📄 معاينة الطباعة</h3>
+      <button onclick="closePreview()">✕ إغلاق</button>
     </div>
+    <div class="preview-body" id="previewBody"></div>
   </div>
-
-  <div id="newDocModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-card">
-      <h3 class="modal-title" id="modalTitle">بدء مستند جديد؟</h3>
-      <p class="modal-desc">سيتم مسح محتوى الورقة الحالية. يمكنك حفظ نسخة Word أو PDF قبل المتابعة.</p>
-      <div class="modal-actions">
-        <button type="button" class="btn-fluent" id="btnCancelNew">إلغاء</button>
-        <button type="button" class="btn-fluent danger-outline" id="btnConfirmNew">نعم، مستند جديد</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="voiceFallbackModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="voiceFallbackTitle">
-    <div class="modal-card" style="max-width:430px;">
-      <h3 class="modal-title" id="voiceFallbackTitle">الإملاء الصوتي الذكي</h3>
-      <p class="modal-desc" id="voiceFallbackDesc" style="margin-bottom:10px;"></p>
-
-      <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
-        <button type="button" class="btn-fluent primary-outline" id="btnTabKbMic" style="flex:1; font-size:12px;">مايك الكيبورد (بدون نت)</button>
-        <button type="button" class="btn-fluent" id="btnTabAudioRec" style="flex:1; font-size:12px;">مسجل الصوت (AI)</button>
-      </div>
-
-      <div id="panelKbMic">
-        <textarea id="voiceFallbackInput" class="modal-input" style="height:105px; padding:10px; resize:vertical; font-family:inherit; margin-bottom:10px;" placeholder="اضغط هنا ثم اضغط على أيقونة الميكروفون في لوحة مفاتيح الهاتف وتحدث..."></textarea>
-        <div class="modal-actions" style="flex-wrap:wrap;">
-          <button type="button" class="btn-fluent" id="btnRetryDirectMic">إعادة محاولة المايك المباشر</button>
-          <button type="button" class="btn-fluent" id="btnCancelVoiceFallback">إغلاق</button>
-          <button type="button" class="btn-fluent primary-outline" id="btnInsertVoiceFallback">إدراج في المستند</button>
-        </div>
-      </div>
-
-      <div id="panelAudioRec" style="display:none;">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px; border:1px solid var(--border-subtle); border-radius:8px; background:#f8f8f7; margin-bottom:10px;">
-          <button type="button" class="btn-fluent primary-outline" id="btnAudioRecToggle">بدء التسجيل الصوتي</button>
-          <span id="audioRecTimer" style="font-weight:700; font-size:13px; color:var(--text-secondary);">00:00</span>
-        </div>
-        <div id="audioPlayerWrap" style="display:none; margin-bottom:10px;">
-          <audio id="audioPlayback" controls style="width:100%; height:36px;"></audio>
-        </div>
-        <input type="password" id="geminiKeyInput" class="modal-input" style="margin-bottom:8px; font-size:12.5px;" placeholder="مفتاح Gemini API (اختياري لتحويل التسجيل إلى نص)" />
-        <div class="modal-actions" style="flex-wrap:wrap;">
-          <button type="button" class="btn-fluent" id="btnCancelAudioRec">إغلاق</button>
-          <button type="button" class="btn-fluent primary-outline" id="btnTranscribeAudio" disabled>تحويل الكلام لنص وإدراجه</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-  <script>
-    (function () {
-      'use strict';
-
-      /* ================= أدوات DOM ================= */
-      const $ = (id) => document.getElementById(id);
-      const editor = $('editor');
-      const docTitleInput = $('docTitle');
-      const imageToolbar = $('imageToolbar');
-      const wordCountEl = $('wordCount');
-      const charCountEl = $('charCount');
-      const saveStatusText = $('saveStatusText');
-      const toastEl = $('toast');
-      const newDocModal = $('newDocModal');
-      const exportModal = $('exportModal');
-      const exportFilenameInput = $('exportFilenameInput');
-      const btnUndo = $('btnUndo');
-      const btnRedo = $('btnRedo');
-      const ribbonPanel = $('ribbonPanel');
-      const jhDropdown = $('jhDropdown');
-      const blockDropdown = $('blockDropdown');
-      const fontDropdown = $('fontDropdown');
-      const sizeDropdown = $('sizeDropdown');
-      const blockPickerLabel = $('blockPickerLabel');
-      const fontPickerLabel = $('fontPickerLabel');
-      const sizePickerLabel = $('sizePickerLabel');
-
-      /* ================= ثوابت ================= */
-      const DB_NAME = 'AbuHazemWordDB';
-      const STORE_NAME = 'docs';
-      const DOC_KEY = 'current_a4_doc';
-      const LS_KEY = 'abu_hazem_a4_backup';
-      const MAX_HISTORY = 40;
-
-      const BLOCKS = [
-        { label: 'نص عادي', value: 'P' },
-        { label: 'عنوان 1', value: 'H1' },
-        { label: 'عنوان 2', value: 'H2' },
-        { label: 'عنوان 3', value: 'H3' }
-      ];
-      const FONTS = [
-        { label: 'Tahoma (عربي واضح)', value: 'Tahoma, Roboto, sans-serif' },
-        { label: 'Arial', value: 'Arial, Helvetica, sans-serif' },
-        { label: 'Calibri', value: "Calibri, 'Segoe UI', sans-serif" },
-        { label: 'Segoe UI', value: "'Segoe UI', system-ui, sans-serif" },
-        { label: 'Simplified Arabic', value: "'Simplified Arabic', Tahoma, sans-serif" },
-        { label: 'Traditional Arabic (نسخ)', value: "'Traditional Arabic', 'Noto Naskh Arabic', Georgia, serif" },
-        { label: 'Sakkal Majalla (ديواني)', value: "'Sakkal Majalla', cursive, serif" },
-        { label: 'Times New Roman (رسمي)', value: "'Times New Roman', 'Noto Serif', serif" },
-        { label: 'Georgia', value: 'Georgia, serif' },
-        { label: 'Courier New (ثابت)', value: "'Courier New', ui-monospace, monospace" }
-      ];
-      const SIZES = ['10pt', '12pt', '14pt', '16pt', '18pt', '20pt', '24pt', '28pt', '36pt'];
-
-      /* ================= حالة عامة ================= */
-      let historyStack = [];
-      let historyIndex = -1;
-      let isRestoringHistory = false;
-      let historyTimer = null;
-      let saveTimer = null;
-      let toastTimer = null;
-      let pendingExportType = null;
-      let selectedImage = null;
-      let savedRange = null;
-      let docxMedia = [];
-
-      function showToast(msg) {
-        toastEl.textContent = msg;
-        toastEl.classList.add('show');
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2500);
-      }
-
-      function safeFilename(name) {
-        return (name || 'مستند').replace(/[\\/:*?"<>|]/g, '_').trim() || 'مستند';
-      }
-
-      function downloadBlob(blob, filename) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1500);
-      }
-
-      /* ================= القوائم المنسدلة ================= */
-      function closeAllDropdowns() {
-        [jhDropdown, blockDropdown, fontDropdown, sizeDropdown].forEach(d => d.classList.remove('open'));
-      }
-
-      function positionDropdown(dropdown, anchorEl) {
-        const rect = anchorEl.getBoundingClientRect();
-        dropdown.classList.add('open');
-        const ddRect = dropdown.getBoundingClientRect();
-        let top = rect.bottom + 5;
-        if (top + ddRect.height > window.innerHeight - 12) top = Math.max(8, rect.top - ddRect.height - 5);
-        let left = rect.right - ddRect.width;
-        left = Math.max(8, Math.min(left, window.innerWidth - ddRect.width - 8));
-        dropdown.style.top = top + 'px';
-        dropdown.style.left = left + 'px';
-      }
-
-      function renderDropdown(dropdown, items, currentValue, onPick) {
-        dropdown.innerHTML = '';
-        items.forEach((it) => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'dropdown-item' + (it.value === currentValue ? ' selected' : '');
-          if (it.font) btn.style.fontFamily = it.font;
-          btn.innerHTML = '<span>' + it.label + '</span>' + (it.value === currentValue ? '<span>✓</span>' : '');
-          btn.addEventListener('pointerdown', (e) => e.preventDefault());
-          btn.addEventListener('click', () => { closeAllDropdowns(); onPick(it); });
-          dropdown.appendChild(btn);
-        });
-      }
-
-      let currentBlockValue = 'P';
-      let currentFontValue = FONTS[0].value;
-      let currentSizeValue = '14pt';
-
-      function refreshBlockDropdown() {
-        renderDropdown(blockDropdown, BLOCKS, currentBlockValue, (it) => {
-          currentBlockValue = it.value;
-          blockPickerLabel.textContent = it.label;
-          setBlockFormat(it.value);
-          refreshBlockDropdown();
-        });
-      }
-      refreshBlockDropdown();
-
-      function refreshFontDropdown() {
-        renderDropdown(fontDropdown, FONTS.map(f => ({ label: f.label, value: f.value, font: f.value })), currentFontValue, (it) => {
-          currentFontValue = it.value;
-          fontPickerLabel.textContent = it.label;
-          applyInlineStyle({ fontFamily: it.value }, ['fontFamily']);
-          refreshFontDropdown();
-        });
-      }
-      refreshFontDropdown();
-
-      function refreshSizeDropdown() {
-        renderDropdown(sizeDropdown, SIZES.map(s => ({ label: String(parseInt(s, 10)), value: s })), currentSizeValue, (it) => {
-          currentSizeValue = it.value;
-          sizePickerLabel.textContent = String(parseInt(it.value, 10));
-          applyInlineStyle({ fontSize: it.value }, ['fontSize']);
-          refreshSizeDropdown();
-        });
-      }
-      refreshSizeDropdown();
-
-      function bindDropdownTrigger(btn, dropdown) {
-        btn.addEventListener('pointerdown', (e) => { e.preventDefault(); saveSelection(); });
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const isOpen = dropdown.classList.contains('open');
-          closeAllDropdowns();
-          if (!isOpen) positionDropdown(dropdown, btn);
-        });
-      }
-
-      $('btnMenuJH').addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isOpen = jhDropdown.classList.contains('open');
-        closeAllDropdowns();
-        if (!isOpen) positionDropdown(jhDropdown, $('btnMenuJH'));
-      });
-
-      bindDropdownTrigger($('blockPickerBtn'), blockDropdown);
-      bindDropdownTrigger($('fontPickerBtn'), fontDropdown);
-      bindDropdownTrigger($('sizePickerBtn'), sizeDropdown);
-
-      document.addEventListener('click', (e) => {
-        if (!jhDropdown.contains(e.target) && e.target !== $('btnMenuJH')) jhDropdown.classList.remove('open');
-        if (!blockDropdown.contains(e.target) && !$('blockPickerBtn').contains(e.target)) blockDropdown.classList.remove('open');
-        if (!fontDropdown.contains(e.target) && !$('fontPickerBtn').contains(e.target)) fontDropdown.classList.remove('open');
-        if (!sizeDropdown.contains(e.target) && !$('sizePickerBtn').contains(e.target)) sizeDropdown.classList.remove('open');
-      });
-
-      /* ================= محرك التحديد والتنسيق (بدون execCommand للتنسيقات الأساسية) ================= */
-      function saveSelection() {
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) {
-          const range = sel.getRangeAt(0);
-          if (editor.contains(range.commonAncestorContainer)) savedRange = range.cloneRange();
-        }
-      }
-
-      function restoreSelection() {
-        if (!savedRange) return;
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(savedRange);
-      }
-
-      function getEditorRange() {
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) {
-          const r = sel.getRangeAt(0);
-          if (editor.contains(r.commonAncestorContainer)) {
-            savedRange = r.cloneRange();
-            return r;
-          }
-        }
-        if (savedRange && editor.contains(savedRange.commonAncestorContainer)) {
-          restoreSelection();
-          const s2 = window.getSelection();
-          if (s2 && s2.rangeCount > 0) return s2.getRangeAt(0);
-        }
-        return null;
-      }
-
-      function expandRangeToWord(range) {
-        if (!range.collapsed) return range;
-        const node = range.startContainer;
-        if (!node || node.nodeType !== 3) return range;
-        const text = node.textContent;
-        let s = range.startOffset;
-        let e = range.endOffset;
-        while (s > 0 && /\S/.test(text.charAt(s - 1))) s--;
-        while (e < text.length && /\S/.test(text.charAt(e))) e++;
-        if (s === e) return range;
-        const r = range.cloneRange();
-        r.setStart(node, s);
-        r.setEnd(node, e);
-        return r;
-      }
-
-      function findFirstText(node) {
-        if (!node) return null;
-        if (node.nodeType === 3) return node.nodeValue ? node : null;
-        for (let i = 0; i < node.childNodes.length; i++) {
-          const t = findFirstText(node.childNodes[i]);
-          if (t) return t;
-        }
-        return null;
-      }
-
-      function findLastText(node) {
-        if (!node) return null;
-        if (node.nodeType === 3) return node.nodeValue ? node : null;
-        for (let i = node.childNodes.length - 1; i >= 0; i--) {
-          const t = findLastText(node.childNodes[i]);
-          if (t) return t;
-        }
-        return null;
-      }
-
-      function normalizeRange(range) {
-        if (range.collapsed) return range.cloneRange();
-        let sc = range.startContainer, so = range.startOffset;
-        let ec = range.endContainer, eo = range.endOffset;
-
-        if (sc === ec && sc.nodeType === 3) {
-          const node = sc;
-          if (eo < node.textContent.length) node.splitText(eo);
-          const rem = so > 0 ? node.splitText(so) : node;
-          const r = document.createRange();
-          r.setStart(rem, 0);
-          r.setEnd(rem, rem.textContent.length);
-          return r;
-        }
-
-        if (sc.nodeType === 1) {
-          const kids = sc.childNodes;
-          let n = null;
-          for (let i = so; i < kids.length && !n; i++) n = findFirstText(kids[i]);
-          if (!n) n = findFirstText(sc);
-          if (!n) return null;
-          sc = n; so = 0;
-        } else if (so > 0 && so < sc.textContent.length) {
-          sc = sc.splitText(so);
-          so = 0;
-        }
-
-        if (ec.nodeType === 1) {
-          const kids = ec.childNodes;
-          let n = null;
-          for (let i = Math.min(eo, kids.length) - 1; i >= 0 && !n; i--) n = findLastText(kids[i]);
-          if (!n) n = findLastText(ec);
-          if (!n) return null;
-          ec = n; eo = n.textContent.length;
-        } else if (eo > 0 && eo < ec.textContent.length) {
-          ec.splitText(eo);
-        }
-
-        const r = document.createRange();
-        r.setStart(sc, so);
-        r.setEnd(ec, eo);
-        return r;
-      }
-
-      function textNodesInRange(range) {
-        const out = [];
-        const root = range.commonAncestorContainer.nodeType === 3
-          ? range.commonAncestorContainer.parentNode
-          : range.commonAncestorContainer;
-        if (!root) return out;
-        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-          acceptNode(n) {
-            if (!n.nodeValue || n.nodeValue === '\u200B') return NodeFilter.FILTER_REJECT;
-            const nr = document.createRange();
-            nr.selectNodeContents(n);
-            if (nr.compareBoundaryPoints(Range.END_TO_START, range) >= 0) return NodeFilter.FILTER_REJECT;
-            if (nr.compareBoundaryPoints(Range.START_TO_END, range) <= 0) return NodeFilter.FILTER_REJECT;
-            return NodeFilter.FILTER_ACCEPT;
-          }
-        });
-        let n;
-        while ((n = walker.nextNode())) out.push(n);
-        return out;
-      }
-
-      function getClosestBlock(node) {
-        let cur = node && node.nodeType === 3 ? node.parentElement : node;
-        while (cur && cur !== editor) {
-          if (cur.nodeType === 1 && /^(P|DIV|H1|H2|H3|LI|BLOCKQUOTE|TD|TH)$/i.test(cur.tagName)) return cur;
-          cur = cur.parentElement;
-        }
-        return null;
-      }
-
-      function getBlocksInRange(range) {
-        const blocks = [];
-        editor.querySelectorAll('p,h1,h2,h3,li,blockquote,div').forEach((b) => {
-          if (b === editor) return;
-          const r = document.createRange();
-          r.selectNodeContents(b);
-          const after = r.compareBoundaryPoints(Range.END_TO_START, range) >= 0;
-          const before = r.compareBoundaryPoints(Range.START_TO_END, range) <= 0;
-          if (!after && !before) blocks.push(b);
-        });
-        return blocks;
-      }
-
-      function afterFormat(skipFocus) {
-        saveSelection();
-        updateToolbarState();
-        updateMetrics();
-        pushHistory();
-        scheduleSave();
-        if (!skipFocus && document.activeElement !== editor) {
-          try { editor.focus({ preventScroll: true }); } catch (_) {}
-          restoreSelection();
-        }
-      }
-
-      function selectNodesSpan(nodes) {
-        if (!nodes.length) return;
-        const r = document.createRange();
-        const ft = findFirstText(nodes[0]);
-        const lt = findLastText(nodes[nodes.length - 1]);
-        if (ft && lt) {
-          r.setStart(ft, 0);
-          r.setEnd(lt, lt.textContent.length);
-        } else {
-          r.setStartBefore(nodes[0]);
-          r.setEndAfter(nodes[nodes.length - 1]);
-        }
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(r);
-        savedRange = r.cloneRange();
-      }
-
-      function tagAliases(tag) {
-        if (tag === 'B') return ['B', 'STRONG'];
-        if (tag === 'I') return ['I', 'EM'];
-        if (tag === 'S') return ['S', 'STRIKE', 'DEL'];
-        return [tag];
-      }
-
-      function findAncestorTag(node, aliases) {
-        let p = node.parentElement;
-        while (p && p !== editor) {
-          if (aliases.includes(p.tagName)) return p;
-          p = p.parentElement;
-        }
-        return null;
-      }
-
-      function splitAncestorAroundNode(anc, targetNode) {
-        if (!anc || !anc.contains(targetNode)) return;
-        let cur = targetNode;
-        while (cur && cur !== anc) {
-          const parent = cur.parentNode;
-          if (!parent) break;
-          const leftClone = parent.cloneNode(false);
-          const rightClone = parent.cloneNode(false);
-          let seen = false;
-          Array.from(parent.childNodes).forEach((ch) => {
-            if (ch === cur) { seen = true; return; }
-            if (!seen) leftClone.appendChild(ch);
-            else rightClone.appendChild(ch);
-          });
-          if (leftClone.childNodes.length) parent.parentNode.insertBefore(leftClone, parent);
-          parent.parentNode.insertBefore(cur, parent);
-          if (rightClone.childNodes.length) parent.parentNode.insertBefore(rightClone, parent);
-          parent.remove();
-          if (parent === anc) break;
-        }
-      }
-
-      function isNodeStyleActive(node, tag) {
-        const el = node && node.nodeType === 3 ? node.parentElement : node;
-        if (!el || !editor.contains(el)) return false;
-        let cs;
-        try { cs = window.getComputedStyle(el); } catch (_) { return false; }
-        if (tag === 'B') return cs.fontWeight === 'bold' || parseInt(cs.fontWeight, 10) >= 600;
-        if (tag === 'I') return cs.fontStyle === 'italic' || cs.fontStyle === 'oblique';
-        const deco = cs.textDecorationLine || cs.textDecoration || '';
-        if (tag === 'U') return deco.indexOf('underline') > -1;
-        if (tag === 'S') return deco.indexOf('line-through') > -1;
-        return false;
-      }
-
-      function clearInlinePropFromAncestors(n, propName) {
-        let p = n.parentElement;
-        while (p && p !== editor) {
-          if (/^(P|DIV|H1|H2|H3|LI|BLOCKQUOTE|TD|TH)$/i.test(p.tagName)) break;
-          const nextP = p.parentElement;
-          if (p.tagName === 'SPAN' && p.style && p.style[propName]) {
-            if (p.childNodes.length === 1) {
-              p.style[propName] = '';
-              if (!p.getAttribute('style') || !p.style.cssText.trim()) p.replaceWith(...p.childNodes);
-            } else {
-              const keepClone = p.cloneNode(false);
-              keepClone.style[propName] = '';
-              splitAncestorAroundNode(p, n);
-              if (keepClone.style.cssText.trim()) {
-                n.parentNode.insertBefore(keepClone, n);
-                keepClone.appendChild(n);
-              }
-            }
-          }
-          p = nextP;
-        }
-      }
-
-      function applyNormalOverride(n, tag) {
-        const styleMap = {
-          B: { fontWeight: 'normal' },
-          I: { fontStyle: 'normal' },
-          U: { textDecoration: 'none' },
-          S: { textDecoration: 'none' }
-        };
-        const st = styleMap[tag];
-        if (!st) return n;
-        const parent = n.parentElement;
-        if (parent && parent.tagName === 'SPAN' && parent.childNodes.length === 1 && parent !== editor) {
-          Object.assign(parent.style, st);
-          return parent;
-        }
-        const span = document.createElement('span');
-        Object.assign(span.style, st);
-        n.parentNode.insertBefore(span, n);
-        span.appendChild(n);
-        return span;
-      }
-
-      function toggleTag(tag) {
-        let range = getEditorRange();
-        if (!range) {
-          editor.focus({ preventScroll: true });
-          range = getEditorRange();
-          if (!range) return;
-        }
-        range = expandRangeToWord(range);
-
-        if (range.collapsed) {
-          const activeNow = isNodeStyleActive(range.startContainer, tag);
-          let el;
-          if (activeNow) {
-            el = document.createElement('span');
-            if (tag === 'B') el.style.fontWeight = 'normal';
-            else if (tag === 'I') el.style.fontStyle = 'normal';
-            else el.style.textDecoration = 'none';
-          } else {
-            el = document.createElement(tag);
-          }
-          const zwsp = document.createTextNode('\u200B');
-          el.appendChild(zwsp);
-          range.insertNode(el);
-          const r = document.createRange();
-          r.setStart(zwsp, 1);
-          r.collapse(true);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(r);
-          savedRange = r.cloneRange();
-          afterFormat(false);
-          return;
-        }
-
-        const norm = normalizeRange(range);
-        if (!norm) return;
-        const nodes = textNodesInRange(norm);
-        if (!nodes.length) return;
-
-        const aliases = tagAliases(tag);
-        const allActive = nodes.every((n) => isNodeStyleActive(n, tag));
-        const resultNodes = [];
-
-        if (allActive) {
-          const propMap = { B: 'fontWeight', I: 'fontStyle', U: 'textDecoration', S: 'textDecoration' };
-          nodes.forEach((n) => {
-            let anc = findAncestorTag(n, aliases);
-            while (anc) {
-              splitAncestorAroundNode(anc, n);
-              anc = findAncestorTag(n, aliases);
-            }
-            clearInlinePropFromAncestors(n, propMap[tag]);
-            if (tag === 'U' || tag === 'S') clearInlinePropFromAncestors(n, 'textDecorationLine');
-            if (isNodeStyleActive(n, tag)) {
-              resultNodes.push(applyNormalOverride(n, tag));
-            } else {
-              resultNodes.push(n);
-            }
-          });
-        } else {
-          const propMap = { B: 'fontWeight', I: 'fontStyle', U: 'textDecoration', S: 'textDecoration' };
-          nodes.forEach((n) => {
-            clearInlinePropFromAncestors(n, propMap[tag]);
-            if (isNodeStyleActive(n, tag)) {
-              resultNodes.push(n);
-              return;
-            }
-            const el = document.createElement(tag);
-            n.parentNode.insertBefore(el, n);
-            el.appendChild(n);
-            resultNodes.push(el);
-          });
-        }
-        selectNodesSpan(resultNodes);
-        afterFormat(false);
-      }
-
-      function applyInlineStyle(styleObj, clearProps, skipFocus) {
-        let range = getEditorRange();
-        if (!range) {
-          if (!skipFocus) editor.focus({ preventScroll: true });
-          range = getEditorRange();
-          if (!range) return;
-        }
-        range = expandRangeToWord(range);
-
-        if (range.collapsed) {
-          const span = document.createElement('span');
-          Object.assign(span.style, styleObj);
-          const zwsp = document.createTextNode('\u200B');
-          span.appendChild(zwsp);
-          range.insertNode(span);
-          const r = document.createRange();
-          r.setStart(zwsp, 1);
-          r.collapse(true);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(r);
-          savedRange = r.cloneRange();
-          afterFormat(skipFocus);
-          return;
-        }
-
-        const norm = normalizeRange(range);
-        if (!norm) return;
-        const nodes = textNodesInRange(norm);
-        if (!nodes.length) return;
-
-        const props = clearProps || Object.keys(styleObj);
-        const created = [];
-
-        nodes.forEach((n) => {
-          const parent = n.parentElement;
-          // إذا كانت العقدة هي الابن الوحيد لـ span، حدّث الـ span مباشرة بدلاً من تكديس spans
-          if (parent && parent.tagName === 'SPAN' && parent.childNodes.length === 1 && parent !== editor) {
-            Object.assign(parent.style, styleObj);
-            created.push(parent);
-          } else {
-            const span = document.createElement('span');
-            Object.assign(span.style, styleObj);
-            n.parentNode.insertBefore(span, n);
-            span.appendChild(n);
-            // نظّف نفس الخاصية من الأبناء إن وجدوا
-            span.querySelectorAll('span,font').forEach((el) => {
-              props.forEach((p) => { el.style[p] = ''; });
-            });
-            created.push(span);
-          }
-        });
-
-        selectNodesSpan(created);
-        afterFormat(skipFocus);
-      }
-
-      function clearFormatting() {
-        let range = getEditorRange();
-        if (!range || range.collapsed) { showToast('حدد نصاً لمسح تنسيقه'); return; }
-        const norm = normalizeRange(range);
-        if (!norm) return;
-        const nodes = textNodesInRange(norm);
-        if (!nodes.length) return;
-        nodes.forEach((n) => {
-          let cur = n.parentElement;
-          while (cur && cur !== editor && /^(B|STRONG|I|EM|U|S|STRIKE|DEL|SPAN|FONT)$/i.test(cur.tagName)) {
-            const nextParent = cur.parentElement;
-            splitAncestorAroundNode(cur, n);
-            cur = nextParent;
-          }
-        });
-        selectNodesSpan(nodes);
-        afterFormat(false);
-        showToast('تم مسح التنسيق');
-      }
-
-      function setBlockFormat(tag) {
-        let range = getEditorRange();
-        if (!range) { showToast('ضع المؤشر في فقرة أولاً'); return; }
-        const norm = normalizeRange(range) || range;
-        let blocks = range.collapsed
-          ? [getClosestBlock(range.startContainer)].filter(Boolean)
-          : getBlocksInRange(norm);
-        if (!blocks.length) blocks = [getClosestBlock(range.startContainer)].filter(Boolean);
-        blocks = blocks.filter((b) => !/^(LI|TD|TH)$/i.test(b.tagName));
-        const replaced = [];
-        blocks.forEach((b) => {
-          if (b.tagName === tag) { replaced.push(b); return; }
-          const el = document.createElement(tag);
-          if (b.style.cssText) el.style.cssText = b.style.cssText;
-          if (b.getAttribute('dir')) el.setAttribute('dir', b.getAttribute('dir'));
-          if (b.getAttribute('align')) el.setAttribute('align', b.getAttribute('align'));
-          if (tag === 'P') el.style.fontWeight = 'normal';
-          while (b.firstChild) el.appendChild(b.firstChild);
-          b.replaceWith(el);
-          replaced.push(el);
-        });
-        if (replaced.length) selectNodesSpan(replaced);
-        afterFormat(false);
-      }
-
-      function setAlignment(align) {
-        let range = getEditorRange();
-        if (!range) {
-          editor.style.textAlign = align;
-          afterFormat(false);
-          return;
-        }
-        const norm = normalizeRange(range) || range;
-        let blocks = range.collapsed
-          ? [getClosestBlock(range.startContainer)].filter(Boolean)
-          : getBlocksInRange(norm);
-        if (!blocks.length) blocks = [getClosestBlock(range.startContainer)].filter(Boolean);
-        if (!blocks.length) editor.style.textAlign = align;
-        else blocks.forEach((b) => { b.style.textAlign = align; });
-        afterFormat(false);
-      }
-
-      function setDirection(dir) {
-        let range = getEditorRange();
-        if (!range) {
-          editor.style.direction = dir;
-          editor.style.textAlign = dir === 'rtl' ? 'right' : 'left';
-          afterFormat(false);
-          return;
-        }
-        const norm = normalizeRange(range) || range;
-        let blocks = range.collapsed
-          ? [getClosestBlock(range.startContainer)].filter(Boolean)
-          : getBlocksInRange(norm);
-        if (!blocks.length) blocks = [getClosestBlock(range.startContainer)].filter(Boolean);
-        if (!blocks.length) {
-          editor.style.direction = dir;
-          editor.style.textAlign = dir === 'rtl' ? 'right' : 'left';
-        } else {
-          blocks.forEach((b) => {
-            b.setAttribute('dir', dir);
-            b.style.direction = dir;
-            b.style.textAlign = dir === 'rtl' ? 'right' : 'left';
-          });
-        }
-        afterFormat(false);
-      }
-
-      /* ================= حالة أزرار الشريط ================= */
-      function updateToolbarState() {
-        const sel = window.getSelection();
-        if (!sel || !sel.rangeCount || !editor.contains(sel.anchorNode)) return;
-        const node = sel.anchorNode;
-        const el = node.nodeType === 3 ? node.parentElement : node;
-        if (!el || !editor.contains(el)) return;
-        let cs;
-        try { cs = window.getComputedStyle(el); } catch (_) { return; }
-        const deco = (cs.textDecorationLine || cs.textDecoration || '');
-        const fw = cs.fontWeight;
-
-        document.querySelectorAll('[data-tag]').forEach((btn) => {
-          const tag = btn.getAttribute('data-tag');
-          let active = false;
-          if (tag === 'B') active = fw === 'bold' || parseInt(fw, 10) >= 600;
-          else if (tag === 'I') active = cs.fontStyle === 'italic';
-          else if (tag === 'U') active = deco.indexOf('underline') > -1;
-          else if (tag === 'S') active = deco.indexOf('line-through') > -1;
-          btn.classList.toggle('active', active);
-        });
-
-        const block = getClosestBlock(node) || editor;
-        const align = (block.style.textAlign || (editor.style.direction === 'ltr' ? 'left' : 'right')).toLowerCase();
-        document.querySelectorAll('[data-align]').forEach((btn) => {
-          btn.classList.toggle('active', btn.getAttribute('data-align') === align);
-        });
-
-        const blockTag = block.tagName;
-        const blockDef = BLOCKS.find(b => b.value === blockTag);
-        if (blockDef) blockPickerLabel.textContent = blockDef.label;
-
-        const bdir = block.getAttribute('dir') || editor.style.direction || 'rtl';
-        $('btnDirRtl').classList.toggle('active', bdir === 'rtl');
-        $('btnDirLtr').classList.toggle('active', bdir === 'ltr');
-      }
-
-      /* ================= ربط أزرار التنسيق ================= */
-      document.querySelectorAll('[data-tag]').forEach((btn) => {
-        btn.addEventListener('pointerdown', (e) => e.preventDefault());
-        btn.addEventListener('click', () => toggleTag(btn.getAttribute('data-tag')));
-      });
-
-      document.querySelectorAll('[data-align]').forEach((btn) => {
-        btn.addEventListener('pointerdown', (e) => e.preventDefault());
-        btn.addEventListener('click', () => setAlignment(btn.getAttribute('data-align')));
-      });
-
-      $('btnDirRtl').addEventListener('pointerdown', (e) => e.preventDefault());
-      $('btnDirRtl').addEventListener('click', () => setDirection('rtl'));
-      $('btnDirLtr').addEventListener('pointerdown', (e) => e.preventDefault());
-      $('btnDirLtr').addEventListener('click', () => setDirection('ltr'));
-
-      document.querySelectorAll('[data-list]').forEach((btn) => {
-        btn.addEventListener('pointerdown', (e) => e.preventDefault());
-        btn.addEventListener('click', () => {
-          editor.focus();
-          restoreSelection();
-          document.execCommand(btn.getAttribute('data-list'), false, null);
-          afterFormat();
-        });
-      });
-
-      $('btnClearFormat').addEventListener('pointerdown', (e) => e.preventDefault());
-      $('btnClearFormat').addEventListener('click', clearFormatting);
-
-      $('foreColorInput').addEventListener('pointerdown', saveSelection);
-      $('foreColorInput').addEventListener('input', (e) => {
-        $('foreColorBar').style.background = e.target.value;
-        applyInlineStyle({ color: e.target.value }, ['color'], true);
-      });
-
-      $('hiliteColorInput').addEventListener('pointerdown', saveSelection);
-      $('hiliteColorInput').addEventListener('input', (e) => {
-        $('hiliteColorBar').style.background = e.target.value;
-        applyInlineStyle({ backgroundColor: e.target.value }, ['backgroundColor'], true);
-      });
-
-      /* ================= اختصارات لوحة المفاتيح ================= */
-      editor.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && !e.altKey) {
-          const k = e.key.toLowerCase();
-          if (k === 'z') { e.preventDefault(); e.shiftKey ? performRedo() : performUndo(); }
-          else if (k === 'y') { e.preventDefault(); performRedo(); }
-          else if (k === 'b') { e.preventDefault(); toggleTag('B'); }
-          else if (k === 'i') { e.preventDefault(); toggleTag('I'); }
-          else if (k === 'u') { e.preventDefault(); toggleTag('U'); }
-        }
-      });
-
-      /* ================= السجل (تراجع/إعادة) ================= */
-      function updateHistoryButtons() {
-        btnUndo.disabled = historyIndex <= 0;
-        btnRedo.disabled = historyIndex >= historyStack.length - 1;
-      }
-
-      function pushHistory() {
-        if (isRestoringHistory) return;
-        const snapshot = {
-          html: editor.innerHTML,
-          dir: editor.style.direction || 'rtl',
-          align: editor.style.textAlign || 'right'
-        };
-        const current = historyStack[historyIndex];
-        if (current && current.html === snapshot.html) return;
-        if (historyIndex < historyStack.length - 1) historyStack = historyStack.slice(0, historyIndex + 1);
-        historyStack.push(snapshot);
-        if (historyStack.length > MAX_HISTORY) historyStack.shift();
-        else historyIndex++;
-        updateHistoryButtons();
-      }
-
-      function scheduleHistoryPush() {
-        clearTimeout(historyTimer);
-        historyTimer = setTimeout(pushHistory, 700);
-      }
-
-      function applyHistorySnapshot(snap) {
-        isRestoringHistory = true;
-        hideImageToolbar();
-        editor.innerHTML = snap.html;
-        editor.style.direction = snap.dir;
-        editor.style.textAlign = snap.align;
-        updateMetrics();
-        scheduleSave();
-        updateHistoryButtons();
-        isRestoringHistory = false;
-      }
-
-      function performUndo() {
-        clearTimeout(historyTimer);
-        pushHistory();
-        if (historyIndex > 0) { historyIndex--; applyHistorySnapshot(historyStack[historyIndex]); }
-      }
-
-      function performRedo() {
-        clearTimeout(historyTimer);
-        if (historyIndex < historyStack.length - 1) { historyIndex++; applyHistorySnapshot(historyStack[historyIndex]); }
-      }
-
-      btnUndo.addEventListener('click', performUndo);
-      btnRedo.addEventListener('click', performRedo);
-
-      /* ================= التخزين المحلي ================= */
-      function openDB() {
-        return new Promise((resolve, reject) => {
-          try {
-            if (!window.indexedDB) return reject(new Error('no idb'));
-            const req = indexedDB.open(DB_NAME, 1);
-            req.onupgradeneeded = () => {
-              if (!req.result.objectStoreNames.contains(STORE_NAME)) req.result.createObjectStore(STORE_NAME);
-            };
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
-          } catch (err) { reject(err); }
-        });
-      }
-
-      async function saveDocState() {
-        const payload = {
-          title: docTitleInput.value.trim() || 'مستند جديد',
-          html: editor.innerHTML,
-          dir: editor.style.direction || 'rtl',
-          updatedAt: Date.now()
-        };
-        try {
-          const db = await openDB();
-          const tx = db.transaction(STORE_NAME, 'readwrite');
-          tx.objectStore(STORE_NAME).put(payload, DOC_KEY);
-        } catch (_) {
-          try { localStorage.setItem(LS_KEY, JSON.stringify(payload)); } catch (__) {}
-        }
-        saveStatusText.textContent = 'محفوظ محلياً';
-      }
-
-      async function loadDocState() {
-        let data = null;
-        try {
-          const db = await openDB();
-          data = await new Promise((resolve) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const req = tx.objectStore(STORE_NAME).get(DOC_KEY);
-            req.onsuccess = () => resolve(req.result || null);
-            req.onerror = () => resolve(null);
-          });
-        } catch (_) {}
-        if (!data) {
-          try {
-            const raw = localStorage.getItem(LS_KEY);
-            if (raw) data = JSON.parse(raw);
-          } catch (_) {}
-        }
-        if (data && typeof data.html === 'string') {
-          docTitleInput.value = data.title || 'مستند جديد';
-          editor.innerHTML = data.html;
-          if (data.dir) {
-            editor.style.direction = data.dir;
-            editor.style.textAlign = data.dir === 'ltr' ? 'left' : 'right';
-          }
-        }
-        updateMetrics();
-        historyStack = [];
-        historyIndex = -1;
-        pushHistory();
-      }
-
-      function scheduleSave() {
-        saveStatusText.textContent = 'جاري الحفظ...';
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(saveDocState, 600);
-      }
-
-      function updateMetrics() {
-        const text = (editor.innerText || '').trim();
-        wordCountEl.textContent = text ? text.split(/\s+/).filter(Boolean).length.toLocaleString('en-US') : '0';
-        charCountEl.textContent = text.replace(/\n/g, '').length.toLocaleString('en-US');
-      }
-
-      /* ================= إدراج جدول وصور ================= */
-      $('btnInsertTable').addEventListener('pointerdown', (e) => e.preventDefault());
-      $('btnInsertTable').addEventListener('click', () => {
-        editor.focus();
-        restoreSelection();
-        document.execCommand('insertHTML', false,
-          '<table><thead><tr><th>العمود 1</th><th>العمود 2</th><th>العمود 3</th></tr></thead>' +
-          '<tbody><tr><td>بيانات</td><td>بيانات</td><td>بيانات</td></tr>' +
-          '<tr><td>بيانات</td><td>بيانات</td><td>بيانات</td></tr></tbody></table><p><br></p>');
-        afterFormat();
-        showToast('تم إدراج جدول');
-      });
-
-      $('btnInsertImage').addEventListener('click', () => {
-        saveSelection();
-        $('imageFileInput').click();
-      });
-
-      $('imageFileInput').addEventListener('change', (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const img = new Image();
-          img.onload = () => {
-            const maxW = 1000;
-            let w = img.width, h = img.height;
-            if (w > maxW) { h = Math.round((h * maxW) / w); w = maxW; }
-            const canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.84);
-            editor.focus();
-            restoreSelection();
-            document.execCommand('insertHTML', false,
-              '<p class="img-wrap" align="center" style="text-align: center; margin: 10px 0;">' +
-              '<img src="' + dataUrl + '" data-pct="75" style="width:75%; max-width:100%; height:auto;" alt="صورة مرفقة" /></p><p><br></p>');
-            afterFormat();
-            showToast('تمت إضافة الصورة');
-          };
-          img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-        e.target.value = '';
-      });
-
-      function hideImageToolbar() {
-        if (selectedImage) {
-          selectedImage.classList.remove('selected-img');
-          selectedImage = null;
-        }
-        imageToolbar.classList.remove('visible');
-      }
-
-      function ensureImgWrapper(img) {
-        const parent = img.parentElement;
-        if (parent && parent !== editor && /^(P|DIV)$/i.test(parent.tagName)) {
-          parent.classList.add('img-wrap');
-          return parent;
-        }
-        const wrap = document.createElement('p');
-        wrap.className = 'img-wrap';
-        wrap.setAttribute('align', 'center');
-        wrap.style.textAlign = 'center';
-        wrap.style.margin = '10px 0';
-        img.parentNode.insertBefore(wrap, img);
-        wrap.appendChild(img);
-        return wrap;
-      }
-
-      editor.addEventListener('click', (e) => {
-        if (e.target && e.target.tagName === 'IMG') {
-          if (selectedImage && selectedImage !== e.target) selectedImage.classList.remove('selected-img');
-          selectedImage = e.target;
-          selectedImage.classList.add('selected-img');
-          const rect = selectedImage.getBoundingClientRect();
-          imageToolbar.classList.add('visible');
-          const tbRect = imageToolbar.getBoundingClientRect();
-          let top = rect.top - tbRect.height - 8;
-          if (top < 64) top = rect.bottom + 8;
-          let left = rect.left + (rect.width / 2) - (tbRect.width / 2);
-          left = Math.max(8, Math.min(left, window.innerWidth - tbRect.width - 8));
-          imageToolbar.style.top = top + 'px';
-          imageToolbar.style.left = left + 'px';
-        } else {
-          hideImageToolbar();
-        }
-      });
-
-      imageToolbar.querySelectorAll('[data-img-size]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          if (!selectedImage) return;
-          const pct = parseInt(btn.getAttribute('data-img-size'), 10) || 75;
-          selectedImage.setAttribute('data-pct', String(pct));
-          selectedImage.style.width = pct + '%';
-          selectedImage.style.height = 'auto';
-          afterFormat();
-        });
-      });
-
-      imageToolbar.querySelectorAll('[data-img-align]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          if (!selectedImage) return;
-          const wrap = ensureImgWrapper(selectedImage);
-          const align = btn.getAttribute('data-img-align');
-          wrap.setAttribute('align', align);
-          wrap.style.textAlign = align;
-          selectedImage.style.display = 'inline-block';
-          selectedImage.style.margin = '0';
-          afterFormat();
-        });
-      });
-
-      $('btnDeleteImg').addEventListener('click', () => {
-        if (!selectedImage) return;
-        selectedImage.remove();
-        hideImageToolbar();
-        afterFormat();
-        showToast('تم حذف الصورة');
-      });
-
-      /* ================= أحداث المحرر ================= */
-      editor.addEventListener('input', () => {
-        updateMetrics();
-        scheduleHistoryPush();
-        scheduleSave();
-      });
-
-      editor.addEventListener('keyup', () => { saveSelection(); updateToolbarState(); });
-      editor.addEventListener('mouseup', () => { saveSelection(); updateToolbarState(); });
-      editor.addEventListener('touchend', () => setTimeout(() => { saveSelection(); updateToolbarState(); }, 60));
-
-      document.addEventListener('selectionchange', () => {
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
-          savedRange = sel.getRangeAt(0).cloneRange();
-          updateToolbarState();
-        }
-      });
-
-      docTitleInput.addEventListener('input', scheduleSave);
-
-      /* ================= أدوات مساعدة للتصدير ================= */
-      function escXml(s) {
-        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-      }
-
-      function rgbToHex(c) {
-        if (!c) return null;
-        c = String(c).trim();
-        if (c.charAt(0) === '#') {
-          return c.length === 4
-            ? '#' + c.charAt(1) + c.charAt(1) + c.charAt(2) + c.charAt(2) + c.charAt(3) + c.charAt(3)
-            : c;
-        }
-        const m = c.match(/rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/);
-        if (m) return '#' + [m[1], m[2], m[3]].map(x => (+x).toString(16).padStart(2, '0')).join('');
-        return null;
-      }
-
-      function dataUrlToBytes(dataUrl) {
-        const b64 = dataUrl.split(',')[1] || '';
-        const bin = atob(b64);
-        const u8 = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-        return u8;
-      }
-
-      const HL_COLORS = {
-        yellow: 'ffff00', brightGreen: '00ff00', turquoise: '00ffff', pink: 'ff00ff',
-        red: 'ff0000', darkBlue: '000080', teal: '008080', green: '008000',
-        violet: '800080', darkRed: '800000', darkYellow: '808000', gray40: '808080',
-        gray25: 'c0c0c0'
-      };
-
-      function nearestHighlight(hex) {
-        const h = hex.replace('#', '');
-        const r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16);
-        let best = 'yellow', bestD = Infinity;
-        Object.keys(HL_COLORS).forEach((name) => {
-          const v = HL_COLORS[name];
-          const dr = r - parseInt(v.substr(0, 2), 16);
-          const dg = g - parseInt(v.substr(2, 2), 16);
-          const db = b - parseInt(v.substr(4, 2), 16);
-          const d = dr * dr + dg * dg + db * db;
-          if (d < bestD) { bestD = d; best = name; }
-        });
-        return best;
-      }
-
-      /* ================= بناء DOCX (ZIP بسيط بدون ضغط) ================= */
-      const CRC_TABLE = (() => {
-        const t = new Uint32Array(256);
-        for (let n = 0; n < 256; n++) {
-          let c = n;
-          for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-          t[n] = c >>> 0;
-        }
-        return t;
-      })();
-
-      function crc32(u8) {
-        let crc = 0xFFFFFFFF;
-        for (let i = 0; i < u8.length; i++) crc = CRC_TABLE[(crc ^ u8[i]) & 0xFF] ^ (crc >>> 8);
-        return (crc ^ 0xFFFFFFFF) >>> 0;
-      }
-
-      function makeZip(entries) {
-        const enc = new TextEncoder();
-        const chunks = [];
-        const central = [];
-        let offset = 0;
-        const now = new Date();
-        const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
-        const dosDate = (((now.getFullYear() - 1980) & 0x7F) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
-
-        entries.forEach((e) => {
-          const name = enc.encode(e.name);
-          const data = e.data;
-          const crc = crc32(data);
-          const lh = new DataView(new ArrayBuffer(30));
-          lh.setUint32(0, 0x04034b50, true);
-          lh.setUint16(4, 20, true);
-          lh.setUint16(6, 0x0800, true); // UTF-8
-          lh.setUint16(8, 0, true);      // stored
-          lh.setUint16(10, dosTime, true);
-          lh.setUint16(12, dosDate, true);
-          lh.setUint32(14, crc, true);
-          lh.setUint32(18, data.length, true);
-          lh.setUint32(22, data.length, true);
-          lh.setUint16(26, name.length, true);
-          lh.setUint16(28, 0, true);
-          chunks.push(new Uint8Array(lh.buffer), name, data);
-          central.push({ name, crc, size: data.length, offset });
-          offset += 30 + name.length + data.length;
-        });
-
-        const cdStart = offset;
-        let cdSize = 0;
-        central.forEach((c) => {
-          const ch = new DataView(new ArrayBuffer(46));
-          ch.setUint32(0, 0x02014b50, true);
-          ch.setUint16(4, 20, true);
-          ch.setUint16(6, 20, true);
-          ch.setUint16(8, 0x0800, true);
-          ch.setUint16(10, 0, true);
-          ch.setUint16(12, dosTime, true);
-          ch.setUint16(14, dosDate, true);
-          ch.setUint32(16, c.crc, true);
-          ch.setUint32(20, c.size, true);
-          ch.setUint32(24, c.size, true);
-          ch.setUint16(28, c.name.length, true);
-          ch.setUint32(42, c.offset, true);
-          chunks.push(new Uint8Array(ch.buffer), c.name);
-          cdSize += 46 + c.name.length;
-        });
-
-        const end = new DataView(new ArrayBuffer(22));
-        end.setUint32(0, 0x06054b50, true);
-        end.setUint16(8, central.length, true);
-        end.setUint16(10, central.length, true);
-        end.setUint32(12, cdSize, true);
-        end.setUint32(16, cdStart, true);
-        chunks.push(new Uint8Array(end.buffer));
-        return new Blob(chunks, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-      }
-
-      /* تحويل عقد DOM إلى runs مع توريث الأنماط */
-      function collectRuns(node, st, out) {
-        node.childNodes.forEach((ch) => {
-          if (ch.nodeType === 3) {
-            if (ch.textContent) out.push({ t: ch.textContent, st });
-            return;
-          }
-          if (ch.nodeType !== 1) return;
-          const tag = ch.tagName;
-          if (tag === 'BR') { out.push({ br: true, st }); return; }
-          if (tag === 'IMG') { out.push({ img: ch, st }); return; }
-          const s = Object.assign({}, st);
-          if (tag === 'B' || tag === 'STRONG') s.bold = true;
-          if (tag === 'I' || tag === 'EM') s.italic = true;
-          if (tag === 'U') s.underline = true;
-          if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL') s.strike = true;
-          const cs = ch.style || {};
-          if (cs.fontWeight === 'bold' || parseInt(cs.fontWeight, 10) >= 600) s.bold = true;
-          else if (cs.fontWeight === 'normal' || (cs.fontWeight && parseInt(cs.fontWeight, 10) < 600)) s.bold = false;
-          if (cs.fontStyle === 'italic') s.italic = true;
-          else if (cs.fontStyle === 'normal') s.italic = false;
-          const td = cs.textDecorationLine || cs.textDecoration || '';
-          if (td.indexOf('underline') > -1) s.underline = true;
-          if (td.indexOf('line-through') > -1) s.strike = true;
-          if (cs.color) s.color = cs.color;
-          if (cs.backgroundColor) s.hl = cs.backgroundColor;
-          if (cs.fontSize) s.sz = parseFloat(cs.fontSize);
-          if (cs.fontFamily) s.font = cs.fontFamily.split(',')[0].replace(/["']/g, '').trim();
-          collectRuns(ch, s, out);
-        });
-      }
-
-      function imageDrawingXml(img) {
-        const idx = docxMedia.length + 1;
-        const rid = 'rId' + idx;
-        docxMedia.push({ rid, name: 'image' + idx + '.jpeg', data: dataUrlToBytes(img.src) });
-        let pct = parseInt(img.getAttribute('data-pct') || '', 10);
-        if (!pct && img.style.width && img.style.width.indexOf('%') > -1) pct = parseInt(img.style.width, 10);
-        if (!pct) pct = 75;
-        const EMU_PER_TWIP = 635;
-        const cx = Math.round(9638 * EMU_PER_TWIP * pct / 100);
-        const cy = img.naturalWidth ? Math.round(cx * img.naturalHeight / img.naturalWidth) : cx;
-        return '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">' +
-          '<wp:extent cx="' + cx + '" cy="' + cy + '"/><wp:effectExtent l="0" t="0" r="0" b="0"/>' +
-          '<wp:docPr id="' + idx + '" name="Picture ' + idx + '"/>' +
-          '<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>' +
-          '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
-          '<pic:pic><pic:nvPicPr><pic:cNvPr id="' + idx + '" name="Picture ' + idx + '"/><pic:cNvPicPr/></pic:nvPicPr>' +
-          '<pic:blipFill><a:blip r:embed="' + rid + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
-          '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm>' +
-          '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic>' +
-          '</a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
-      }
-
-      function runXml(r, defaults) {
-        if (r.br) return '<w:r><w:br/></w:r>';
-        if (r.img) return imageDrawingXml(r.img);
-        const st = r.st || {};
-        let rPr = '';
-        if (st.bold !== undefined ? st.bold : defaults.bold) rPr += '<w:b/>';
-        if (st.italic !== undefined ? st.italic : defaults.italic) rPr += '<w:i/>';
-        if (st.underline) rPr += '<w:u w:val="single"/>';
-        if (st.strike) rPr += '<w:strike/>';
-        const color = rgbToHex(st.color);
-        if (color) rPr += '<w:color w:val="' + color.slice(1) + '"/>';
-        const hl = rgbToHex(st.hl);
-        if (hl && hl !== '#000000') rPr += '<w:highlight w:val="' + nearestHighlight(hl) + '"/>';
-        const szPt = st.sz || defaults.sz;
-        if (szPt) rPr += '<w:sz w:val="' + Math.round(szPt * 2) + '"/><w:szCs w:val="' + Math.round(szPt * 2) + '"/>';
-        const font = st.font || defaults.font;
-        if (font) rPr += '<w:rFonts w:ascii="' + escXml(font) + '" w:hAnsi="' + escXml(font) + '" w:cs="' + escXml(font) + '"/>';
-        if (st.dir === 'rtl') rPr += '<w:rtl/>';
-        return '<w:r><w:rPr>' + rPr + '</w:rPr><w:t xml:space="preserve">' + escXml(r.t) + '</w:t></w:r>';
-      }
-
-      function paragraphXml(el, opts) {
-        opts = opts || {};
-        const tag = el.tagName;
-        const dir = el.getAttribute('dir') || el.style.direction || editor.style.direction || 'rtl';
-        let align = (el.style.textAlign || el.getAttribute('align') || '').toLowerCase();
-        if (!align) align = dir === 'rtl' ? 'right' : 'left';
-
-        const defaults = { dir, font: 'Tahoma' };
-        if (tag === 'H1') { defaults.sz = 22; defaults.bold = true; }
-        else if (tag === 'H2') { defaults.sz = 18; defaults.bold = true; }
-        else if (tag === 'H3') { defaults.sz = 15; defaults.bold = true; }
-
-        const runs = [];
-        collectRuns(el, { dir }, runs);
-        if (opts.prefix) runs.unshift({ t: opts.prefix + ' ', st: { dir } });
-
-        let pPr = '<w:pPr>';
-        if (align === 'center') pPr += '<w:jc w:val="center"/>';
-        else if (align === 'left') pPr += '<w:jc w:val="left"/>';
-        else if (align === 'justify') pPr += '<w:jc w:val="both"/>';
-        else pPr += '<w:jc w:val="right"/>';
-        if (dir === 'rtl') pPr += '<w:bidi/>';
-        if (opts.indent) pPr += '<w:ind w:right="' + opts.indent + '"/>';
-        pPr += '<w:spacing w:after="120" w:line="360" w:lineRule="auto"/></w:pPr>';
-
-        let runsXml = runs.map(r => runXml(r, defaults)).join('');
-        if (!runs.length) runsXml = '<w:r><w:t></w:t></w:r>';
-        return '<w:p>' + pPr + runsXml + '</w:p>';
-      }
-
-      function tableXml(tbl) {
-        let xml = '<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblBorders>';
-        ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].forEach((e) => {
-          xml += '<w:' + e + ' w:val="single" w:sz="4" w:space="0" w:color="8a8886"/>';
-        });
-        xml += '</w:tblBorders></w:tblPr><w:tblGrid>';
-        const colCount = Math.max(1, (tbl.querySelector('tr') || { children: [] }).children.length);
-        const colW = Math.round(9638 / colCount);
-        for (let i = 0; i < colCount; i++) xml += '<w:gridCol w:w="' + colW + '"/>';
-        xml += '</w:tblGrid>';
-        tbl.querySelectorAll('tr').forEach((tr) => {
-          xml += '<w:tr>';
-          Array.from(tr.children).forEach((cell) => {
-            xml += '<w:tc><w:tcPr><w:tcW w:w="' + colW + '" w:type="dxa"/></w:tcPr>';
-            const ps = Array.from(cell.children).filter(c => /^(P|H1|H2|H3|DIV)$/i.test(c.tagName));
-            if (ps.length) ps.forEach(p => { xml += paragraphXml(p); });
-            else xml += '<w:p><w:r><w:t xml:space="preserve">' + escXml(cell.textContent) + '</w:t></w:r></w:p>';
-            xml += '</w:tc>';
-          });
-          xml += '</w:tr>';
-        });
-        return xml + '</w:tbl>';
-      }
-
-      function imageParagraphXml(img, align) {
-        return '<w:p><w:pPr><w:jc w:val="' + (align || 'center') + '"/></w:pPr>' + imageDrawingXml(img) + '</w:p>';
-      }
-
-      function buildDocumentXml() {
-        docxMedia = [];
-        let body = '';
-        editor.childNodes.forEach((node) => {
-          if (node.nodeType === 3) {
-            if (node.textContent.trim()) body += '<w:p><w:r><w:t xml:space="preserve">' + escXml(node.textContent) + '</w:t></w:r></w:p>';
-            return;
-          }
-          if (node.nodeType !== 1) return;
-          const tag = node.tagName;
-          if (/^(P|H1|H2|H3|BLOCKQUOTE|DIV)$/i.test(tag)) body += paragraphXml(node);
-          else if (tag === 'TABLE') body += tableXml(node);
-          else if (tag === 'UL' || tag === 'OL') {
-            Array.from(node.children).filter(c => c.tagName === 'LI').forEach((li, idx) => {
-              const prefix = tag === 'OL' ? (idx + 1) + '.' : '•';
-              body += paragraphXml(li, { prefix, indent: 720 });
-            });
-          } else if (tag === 'IMG') body += imageParagraphXml(node, 'center');
-        });
-        if (!body.trim()) body = '<w:p><w:r><w:t></w:t></w:r></w:p>';
-        body += '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>';
-        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-          '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"' +
-          ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"' +
-          ' xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"' +
-          ' xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"' +
-          ' xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
-          '<w:body>' + body + '</w:body></w:document>';
-      }
-
-      function exportDocx(fileTitle) {
-        hideImageToolbar();
-        const title = safeFilename(fileTitle || docTitleInput.value);
-        const enc = new TextEncoder();
-
-        const documentXml = buildDocumentXml();
-
-        const entries = [
-          { name: '[Content_Types].xml', data: enc.encode(
-            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-            '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
-            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
-            '<Default Extension="xml" ContentType="application/xml"/>' +
-            '<Default Extension="jpeg" ContentType="image/jpeg"/>' +
-            '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
-            '</Types>') },
-          { name: '_rels/.rels', data: enc.encode(
-            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
-            '</Relationships>') },
-          { name: 'word/document.xml', data: enc.encode(documentXml) }
-        ];
-
-        if (docxMedia.length) {
-          let rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
-          docxMedia.forEach((m, i) => {
-            rels += '<Relationship Id="' + m.rid + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/' + m.name + '"/>';
-            entries.push({ name: 'word/media/' + m.name, data: m.data });
-          });
-          rels += '</Relationships>';
-          entries.push({ name: 'word/_rels/document.xml.rels', data: enc.encode(rels) });
-        }
-
-        downloadBlob(makeZip(entries), title + '.docx');
-        showToast('تم حفظ ' + title + '.docx');
-      }
-
-      /* ================= PDF بدون مكتبات خارجية ================= */
-      function buildPdfFromJpegs(jpegArrays) {
-        const encoder = new TextEncoder();
-        const chunks = [];
-        let offset = 0;
-        const offsets = [0];
-
-        function pushBytes(u8) { chunks.push(u8); offset += u8.length; }
-        function pushStr(str) { pushBytes(encoder.encode(str)); }
-
-        pushStr('%PDF-1.4\n%\xFF\xFF\xFF\xFF\n');
-        const n = jpegArrays.length;
-        const kids = [];
-        for (let i = 0; i < n; i++) kids.push((3 + i * 3) + ' 0 R');
-
-        offsets.push(offset);
-        pushStr('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
-        offsets.push(offset);
-        pushStr('2 0 obj\n<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + n + ' >>\nendobj\n');
-
-        for (let i = 0; i < n; i++) {
-          const pageObj = 3 + i * 3;
-          const imgObj = 4 + i * 3;
-          const contentObj = 5 + i * 3;
-          const jpg = jpegArrays[i];
-          const streamCmd = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q\n';
-
-          offsets.push(offset);
-          pushStr(pageObj + ' 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ' + imgObj + ' 0 R >> >> /Contents ' + contentObj + ' 0 R >>\nendobj\n');
-          offsets.push(offset);
-          pushStr(imgObj + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width 1240 /Height 1754 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpg.length + ' >>\nstream\n');
-          pushBytes(jpg);
-          pushStr('\nendstream\nendobj\n');
-          offsets.push(offset);
-          pushStr(contentObj + ' 0 obj\n<< /Length ' + streamCmd.length + ' >>\nstream\n' + streamCmd + 'endstream\nendobj\n');
-        }
-
-        const xrefStart = offset;
-        pushStr('xref\n0 ' + offsets.length + '\n0000000000 65535 f \n');
-        for (let i = 1; i < offsets.length; i++) pushStr(String(offsets[i]).padStart(10, '0') + ' 00000 n \n');
-        pushStr('trailer\n<< /Size ' + offsets.length + ' /Root 1 0 R >>\nstartxref\n' + xrefStart + '\n%%EOF');
-        return new Blob(chunks, { type: 'application/pdf' });
-      }
-
-      function exportPdf(fileTitle) {
-        hideImageToolbar();
-        const title = safeFilename(fileTitle || docTitleInput.value);
-
-        const PAGE_W = 1240, PAGE_H = 1754;
-        const MARGIN_X = 110, MARGIN_Y = 110;
-        const CONTENT_W = PAGE_W - MARGIN_X * 2;
-        const MAX_Y = PAGE_H - MARGIN_Y;
-        const PX_PER_PT = 2.0833;
-
-        const pages = [];
-        let canvas, ctx, curY;
-
-        function newPage() {
-          canvas = document.createElement('canvas');
-          canvas.width = PAGE_W;
-          canvas.height = PAGE_H;
-          ctx = canvas.getContext('2d');
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, PAGE_W, PAGE_H);
-          pages.push(canvas);
-          curY = MARGIN_Y;
-        }
-        newPage();
-
-        function ensureSpace(h) {
-          if (curY + h > MAX_Y && curY > MARGIN_Y + 20) newPage();
-        }
-
-        function baseSt(overrides) {
-          return Object.assign({
-            bold: false, italic: false, underline: false, strike: false,
-            szpt: 14, color: '#111827', font: 'Tahoma',
-            dir: editor.style.direction || 'rtl'
-          }, overrides || {});
-        }
-
-        function fontStr(st) {
-          return (st.italic ? 'italic ' : '') + (st.bold ? 'bold ' : '') +
-            Math.round(st.szpt * PX_PER_PT) + 'px ' + st.font + ', Tahoma, Arial, sans-serif';
-        }
-
-        function mergeStyle(st, el) {
-          const s = Object.assign({}, st);
-          const tag = el.tagName;
-          if (tag === 'B' || tag === 'STRONG') s.bold = true;
-          if (tag === 'I' || tag === 'EM') s.italic = true;
-          if (tag === 'U') s.underline = true;
-          if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL') s.strike = true;
-          const cs = el.style || {};
-          if (cs.fontWeight === 'bold' || parseInt(cs.fontWeight, 10) >= 600) s.bold = true;
-          else if (cs.fontWeight === 'normal' || (cs.fontWeight && parseInt(cs.fontWeight, 10) < 600)) s.bold = false;
-          if (cs.fontStyle === 'italic') s.italic = true;
-          else if (cs.fontStyle === 'normal') s.italic = false;
-          const td = cs.textDecorationLine || cs.textDecoration || '';
-          if (td.indexOf('underline') > -1) s.underline = true;
-          if (td.indexOf('line-through') > -1) s.strike = true;
-          if (cs.color) s.color = cs.color;
-          if (cs.fontSize) { const v = parseFloat(cs.fontSize); if (v) s.szpt = v; }
-          if (cs.fontFamily) s.font = cs.fontFamily.split(',')[0].replace(/["']/g, '').trim();
-          return s;
-        }
-
-        /* تجميع عناصر الفقرة: كلمات / صور / فواصل أسطر */
-        function collectItems(node, st, out) {
-          node.childNodes.forEach((ch) => {
-            if (ch.nodeType === 3) {
-              const parts = ch.textContent.split(/\s+/).filter(Boolean);
-              parts.forEach((w) => out.push({ type: 'word', text: w, st }));
-              return;
-            }
-            if (ch.nodeType !== 1) return;
-            const tag = ch.tagName;
-            if (tag === 'BR') { out.push({ type: 'break', st }); return; }
-            if (tag === 'IMG') { out.push({ type: 'image', el: ch, st }); return; }
-            collectItems(ch, mergeStyle(st, ch), out);
-          });
-        }
-
-        function measureWord(it) {
-          ctx.font = fontStr(it.st);
-          return ctx.measureText(it.text).width;
-        }
-
-        function layoutLines(items, maxW) {
-          const lines = [];
-          let cur = [];
-          let curW = 0;
-          function pushLine() { lines.push(cur); cur = []; curW = 0; }
-          items.forEach((it) => {
-            if (it.type === 'break') { pushLine(); return; }
-            if (it.type === 'image') {
-              if (cur.length) pushLine();
-              cur.push(it);
-              pushLine();
-              return;
-            }
-            const w = measureWord(it);
-            ctx.font = fontStr(it.st);
-            const sp = cur.length ? ctx.measureText(' ').width : 0;
-            if (cur.length && curW + sp + w > maxW) { pushLine(); cur.push(it); curW = w; }
-            else { cur.push(it); curW += sp + w; }
-          });
-          if (cur.length) pushLine();
-          if (!lines.length) lines.push([]);
-          return lines;
-        }
-
-        function imageDims(img) {
-          let pct = parseInt(img.getAttribute('data-pct') || '', 10);
-          if (!pct && img.style.width && img.style.width.indexOf('%') > -1) pct = parseInt(img.style.width, 10);
-          if (!pct) pct = 75;
-          const w = Math.min(CONTENT_W, Math.round((CONTENT_W * pct) / 100));
-          const h = img.naturalWidth ? Math.round((w * img.naturalHeight) / img.naturalWidth) : w;
-          return { w, h };
-        }
-
-        function drawLine(line, y, align, dir) {
-          if (!line.length) return;
-          if (line[0].type === 'image') {
-            const it = line[0];
-            if (!it.el.complete || !it.el.naturalWidth) return;
-            const d = imageDims(it.el);
-            ensureSpace(d.h + 16);
-            let x = MARGIN_X + (CONTENT_W - d.w) / 2;
-            if (align === 'right') x = PAGE_W - MARGIN_X - d.w;
-            else if (align === 'left') x = MARGIN_X;
-            ctx.drawImage(it.el, x, curY, d.w, d.h);
-            curY += d.h + 16;
-            return;
-          }
-
-          const widths = line.map(measureWord);
-          const spaceWs = line.map((it, i) => {
-            if (i === 0) return 0;
-            ctx.font = fontStr(it.st);
-            return ctx.measureText(' ').width;
-          });
-          let total = widths.reduce((a, b) => a + b, 0) + spaceWs.reduce((a, b) => a + b, 0);
-
-          const sizes = line.map(it => Math.round(it.st.szpt * PX_PER_PT));
-          const lineH = Math.max.apply(null, sizes.map(s => Math.round(s * 1.55)));
-          ensureSpace(lineH);
-
-          let startX;
-          let extraSpace = 0;
-          if (align === 'center') startX = (PAGE_W - total) / 2;
-          else if (align === 'left') startX = MARGIN_X;
-          else if (align === 'justify') {
-            startX = MARGIN_X;
-            if (line.length > 1) extraSpace = (CONTENT_W - total) / (line.length - 1);
-          } else startX = PAGE_W - MARGIN_X - total;
-
-          ctx.textBaseline = 'top';
-          if (dir === 'rtl') {
-            let x = startX + total;
-            line.forEach((it, i) => {
-              const w = widths[i];
-              const sp = i === 0 ? 0 : spaceWs[i] + extraSpace;
-              x -= sp + w;
-              drawWord(it, x, y, w);
-            });
-          } else {
-            let x = startX;
-            line.forEach((it, i) => {
-              const w = widths[i];
-              if (i > 0) x += spaceWs[i] + extraSpace;
-              drawWord(it, x, y, w);
-              x += w;
-            });
-          }
-          curY += lineH;
-        }
-
-        function drawWord(it, x, y, w) {
-          ctx.font = fontStr(it.st);
-          ctx.fillStyle = it.st.color;
-          ctx.textAlign = 'left';
-          ctx.fillText(it.text, x, y);
-          const s = Math.round(it.st.szpt * PX_PER_PT);
-          if (it.st.underline) {
-            ctx.strokeStyle = it.st.color;
-            ctx.lineWidth = Math.max(1, s * 0.05);
-            const uy = y + s * 0.88;
-            ctx.beginPath(); ctx.moveTo(x, uy); ctx.lineTo(x + w, uy); ctx.stroke();
-          }
-          if (it.st.strike) {
-            ctx.strokeStyle = it.st.color;
-            ctx.lineWidth = Math.max(1, s * 0.05);
-            const sy = y + s * 0.48;
-            ctx.beginPath(); ctx.moveTo(x, sy); ctx.lineTo(x + w, sy); ctx.stroke();
-          }
-        }
-
-        function drawParagraphBlock(el, prefixText) {
-          const tag = el.tagName;
-          let def;
-          if (tag === 'H1') def = { szpt: 22, bold: true };
-          else if (tag === 'H2') def = { szpt: 18, bold: true };
-          else if (tag === 'H3') def = { szpt: 15, bold: true };
-          else def = {};
-          if (/^(B|STRONG)$/i.test(tag)) def.bold = true;
-          if (/^(I|EM)$/i.test(tag)) def.italic = true;
-
-          const st = mergeStyle(baseSt(def), el);
-          const dir = el.getAttribute('dir') || el.style.direction || st.dir;
-          let align = (el.style.textAlign || el.getAttribute('align') || '').toLowerCase();
-          if (!align) align = dir === 'rtl' ? 'right' : 'left';
-
-          const items = [];
-          if (prefixText) items.push({ type: 'word', text: prefixText, st });
-          collectItems(el, st, items);
-
-          const lines = layoutLines(items, CONTENT_W);
-          lines.forEach((line) => drawLine(line, curY, align, dir));
-          curY += Math.round(st.szpt * PX_PER_PT * 0.35);
-        }
-
-        function drawTableEl(tbl) {
-          const rows = Array.from(tbl.querySelectorAll('tr'));
-          if (!rows.length) return;
-          const cols = Math.max(1, rows[0].children.length);
-          const colW = CONTENT_W / cols;
-          const rowH = 54;
-          ctx.textBaseline = 'middle';
-          rows.forEach((tr) => {
-            ensureSpace(rowH);
-            const isHeader = tr.parentElement && tr.parentElement.tagName === 'THEAD';
-            const cells = Array.from(tr.children);
-            cells.forEach((cell, cIdx) => {
-              const x = MARGIN_X + cIdx * colW;
-              if (isHeader) {
-                ctx.fillStyle = '#f3f2f1';
-                ctx.fillRect(x, curY, colW, rowH);
-              }
-              ctx.strokeStyle = '#8a8886';
-              ctx.lineWidth = 1.5;
-              ctx.strokeRect(x, curY, colW, rowH);
-              ctx.fillStyle = '#111827';
-              ctx.textAlign = 'center';
-              ctx.font = (isHeader ? 'bold ' : '') + '24px Tahoma, Arial, sans-serif';
-              ctx.fillText((cell.innerText || '').trim().slice(0, 28), x + colW / 2, curY + rowH / 2);
-            });
-            curY += rowH;
-          });
-          curY += 20;
-        }
-
-        Array.from(editor.childNodes).forEach((node) => {
-          if (node.nodeType === 3) {
-            if (node.textContent.trim()) {
-              const p = document.createElement('p');
-              p.textContent = node.textContent;
-              drawParagraphBlock(p);
-            }
-            return;
-          }
-          if (node.nodeType !== 1) return;
-          const tag = node.tagName;
-          if (/^(P|H1|H2|H3|DIV|BLOCKQUOTE|B|STRONG|I|EM|SPAN)$/i.test(tag)) drawParagraphBlock(node);
-          else if (tag === 'TABLE') drawTableEl(node);
-          else if (tag === 'UL' || tag === 'OL') {
-            Array.from(node.children).filter(c => c.tagName === 'LI').forEach((li, idx) => {
-              drawParagraphBlock(li, tag === 'OL' ? (idx + 1) + '.' : '•');
-            });
-          } else if (tag === 'IMG') {
-            drawLine([{ type: 'image', el: node, st: baseSt() }], curY, 'center', 'rtl');
-          }
-        });
-
-        const jpegArrays = pages.map((pg) => dataUrlToBytes(pg.toDataURL('image/jpeg', 0.92)));
-        downloadBlob(buildPdfFromJpegs(jpegArrays), title + '.pdf');
-        showToast('تم حفظ ' + title + '.pdf');
-      }
-
-      /* ================= قائمة الملف ================= */
-      function closeNewModal() {
-        newDocModal.classList.remove('open');
-        document.body.classList.remove('modal-open');
-      }
-
-      $('menuBtnNew').addEventListener('click', () => {
-        closeAllDropdowns();
-        newDocModal.classList.add('open');
-        document.body.classList.add('modal-open');
-      });
-      $('btnCancelNew').addEventListener('click', closeNewModal);
-      newDocModal.addEventListener('click', (e) => { if (e.target === newDocModal) closeNewModal(); });
-
-      $('btnConfirmNew').addEventListener('click', () => {
-        docTitleInput.value = 'مستند جديد';
-        editor.innerHTML = '<p><br></p>';
-        editor.style.direction = 'rtl';
-        editor.style.textAlign = 'right';
-        updateMetrics();
-        pushHistory();
-        saveDocState();
-        closeNewModal();
-        editor.focus();
-        showToast('تم فتح مستند A4 جديد');
-      });
-
-      $('menuBtnOpen').addEventListener('click', () => {
-        closeAllDropdowns();
-        $('openDocInput').click();
-      });
-
-      $('openDocInput').addEventListener('change', (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-        const nameNoExt = file.name.replace(/\.[^/.]+$/, '') || 'مستند مفتوح';
-        const ext = file.name.split('.').pop().toLowerCase();
-
-        if (ext === 'docx') {
-          showToast('صيغة .docx غير مدعومة للفتح — استخدم .doc أو .html أو .txt');
-          e.target.value = '';
-          return;
-        }
-        if (!['doc', 'html', 'htm', 'txt'].includes(ext)) {
-          showToast('يدعم فتح ملفات .doc و.html و.txt');
-          e.target.value = '';
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const content = ev.target.result || '';
-          if (ext === 'txt') {
-            const lines = content.split(/\r?\n/);
-            editor.innerHTML = lines.map((line) => {
-              const safe = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-              return '<p>' + (safe || '<br>') + '</p>';
-            }).join('');
-          } else {
-            const doc = new DOMParser().parseFromString(content, 'text/html');
-            doc.querySelectorAll('script, style, link, meta').forEach((el) => el.remove());
-            const section = doc.querySelector('.Section1') || doc.body;
-            const bodyDir = (doc.body && doc.body.getAttribute('dir')) || 'rtl';
-            editor.innerHTML = section ? section.innerHTML : '<p><br></p>';
-            editor.style.direction = bodyDir;
-            editor.style.textAlign = bodyDir === 'ltr' ? 'left' : 'right';
-          }
-          docTitleInput.value = nameNoExt;
-          updateMetrics();
-          pushHistory();
-          saveDocState();
-          showToast('تم فتح: ' + file.name);
-        };
-        reader.readAsText(file, 'utf-8');
-        e.target.value = '';
-      });
-
-      /* ================= نافذة اسم الملف ================= */
-      function openExportModal(type) {
-        closeAllDropdowns();
-        pendingExportType = type;
-        $('exportModalTitle').textContent = type === 'word' ? 'حفظ بصيغة Word ‏(.docx)' : 'حفظ بصيغة PDF ‏(.pdf)';
-        $('exportModalDesc').textContent = 'أدخل اسم الملف قبل التنزيل:';
-        exportFilenameInput.value = docTitleInput.value.trim() || 'مستند جديد';
-        exportModal.classList.add('open');
-        document.body.classList.add('modal-open');
-        setTimeout(() => { exportFilenameInput.focus(); exportFilenameInput.select(); }, 60);
-      }
-
-      function closeExportModal() {
-        exportModal.classList.remove('open');
-        document.body.classList.remove('modal-open');
-        pendingExportType = null;
-      }
-
-      $('btnCancelExport').addEventListener('click', closeExportModal);
-      exportModal.addEventListener('click', (e) => { if (e.target === exportModal) closeExportModal(); });
-
-      $('btnConfirmExport').addEventListener('click', () => {
-        const chosenName = safeFilename(exportFilenameInput.value);
-        docTitleInput.value = chosenName;
-        const type = pendingExportType;
-        closeExportModal();
-        if (type === 'word') exportDocx(chosenName);
-        else if (type === 'pdf') exportPdf(chosenName);
-      });
-
-      exportFilenameInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); $('btnConfirmExport').click(); }
-      });
-
-      $('menuBtnSaveWord').addEventListener('click', () => openExportModal('word'));
-      $('btnPreviewWord').addEventListener('click', () => openExportModal('word'));
-      $('menuBtnSavePdf').addEventListener('click', () => openExportModal('pdf'));
-      $('btnPreviewPdf').addEventListener('click', () => openExportModal('pdf'));
-      $('menuBtnQuickSave').addEventListener('click', async () => {
-        closeAllDropdowns();
-        await saveDocState();
-        showToast('تم حفظ المستند محلياً');
-      });
-      $('menuBtnCloseMenu').addEventListener('click', closeAllDropdowns);
-
-      /* ================= معاينة A4 ================= */
-      const previewOverlay = $('previewOverlay');
-      const previewStage = $('previewStage');
-      const previewSheet = $('previewSheet');
-
-      function scalePreviewForViewport() {
-        const availW = window.innerWidth - 20;
-        const sheetW = 794;
-        previewSheet.style.transform = '';
-        const naturalH = previewSheet.offsetHeight || 1123;
-        if (availW < sheetW) {
-          const scale = Math.max(0.35, availW / sheetW);
-          previewStage.style.width = Math.round(sheetW * scale) + 'px';
-          previewStage.style.height = Math.round(naturalH * scale) + 'px';
-          previewSheet.style.transformOrigin = 'top right';
-          previewSheet.style.transform = 'scale(' + scale + ')';
-        } else {
-          previewStage.style.width = sheetW + 'px';
-          previewStage.style.height = naturalH + 'px';
-          previewSheet.style.transform = '';
-        }
-      }
-
-      function openPreview() {
-        closeAllDropdowns();
-        hideImageToolbar();
-        $('previewDocTitle').textContent = 'معاينة A4 — ' + (docTitleInput.value.trim() || 'مستند جديد');
-        previewSheet.innerHTML = editor.innerHTML;
-        previewSheet.style.direction = editor.style.direction || 'rtl';
-        previewSheet.style.textAlign = editor.style.textAlign || (editor.style.direction === 'ltr' ? 'left' : 'right');
-        previewOverlay.classList.add('open');
-        document.body.classList.add('modal-open');
-        scalePreviewForViewport();
-      }
-
-      function closePreview() {
-        previewOverlay.classList.remove('open');
-        document.body.classList.remove('modal-open');
-      }
-
-      $('menuBtnPreview').addEventListener('click', openPreview);
-      $('btnClosePreview').addEventListener('click', closePreview);
-      window.addEventListener('resize', () => {
-        if (previewOverlay.classList.contains('open')) scalePreviewForViewport();
-      });
-
-      /* ================= بطاقة التنسيق القابلة للطي ================= */
-      function setFormatPanelOpen(isOpen) {
-        ribbonPanel.classList.toggle('open', isOpen);
-        $('btnToggleFormat').classList.toggle('primary-outline', isOpen);
-      }
-
-      $('btnToggleFormat').addEventListener('pointerdown', (e) => e.preventDefault());
-      $('btnToggleFormat').addEventListener('click', () => {
-        setFormatPanelOpen(!ribbonPanel.classList.contains('open'));
-      });
-      setFormatPanelOpen(window.innerWidth > 768);
-
-      /* ================= حماية زر الرجوع والحفظ التلقائي ================= */
-      function pushBackGuard() {
-        try { history.pushState({ ahWordGuard: true }, '', location.href); } catch (_) {}
-      }
-      pushBackGuard();
-
-      window.addEventListener('popstate', () => {
-        if (typeof isRecording !== 'undefined' && isRecording) { stopDictation(); pushBackGuard(); return; }
-        if (voiceFallbackModal && voiceFallbackModal.classList.contains('open')) { closeVoiceFallback(); pushBackGuard(); return; }
-        if (exportModal.classList.contains('open')) { closeExportModal(); pushBackGuard(); return; }
-        if (previewOverlay.classList.contains('open')) { closePreview(); pushBackGuard(); return; }
-        if (newDocModal.classList.contains('open')) { closeNewModal(); pushBackGuard(); return; }
-        if (jhDropdown.classList.contains('open') || fontDropdown.classList.contains('open') ||
-            blockDropdown.classList.contains('open') || sizeDropdown.classList.contains('open')) {
-          closeAllDropdowns(); pushBackGuard(); return;
-        }
-        if (selectedImage) { hideImageToolbar(); pushBackGuard(); return; }
-        if (window.innerWidth <= 768 && ribbonPanel.classList.contains('open')) {
-          setFormatPanelOpen(false); pushBackGuard(); return;
-        }
-        saveDocState();
-        pushBackGuard();
-        showToast('تم حفظ مستندك تلقائياً — أنت داخل البرنامج');
-      });
-
-      window.addEventListener('pagehide', saveDocState);
-      window.addEventListener('beforeunload', saveDocState);
-
-      /* ================= الإملاء الصوتي الذكي (متعدد المسارات) ================= */
-      const btnVoiceDictate = $('btnVoiceDictate');
-      const voiceBtnLabel = $('voiceBtnLabel');
-      const dictationBar = $('dictationBar');
-      const dictationText = $('dictationText');
-      const btnVoiceLang = $('btnVoiceLang');
-      const btnVoiceStop = $('btnVoiceStop');
-      const voiceFallbackModal = $('voiceFallbackModal');
-      const voiceFallbackDesc = $('voiceFallbackDesc');
-      const voiceFallbackInput = $('voiceFallbackInput');
-      const panelKbMic = $('panelKbMic');
-      const panelAudioRec = $('panelAudioRec');
-      const btnTabKbMic = $('btnTabKbMic');
-      const btnTabAudioRec = $('btnTabAudioRec');
-      const btnAudioRecToggle = $('btnAudioRecToggle');
-      const audioRecTimer = $('audioRecTimer');
-      const audioPlayerWrap = $('audioPlayerWrap');
-      const audioPlayback = $('audioPlayback');
-      const geminiKeyInput = $('geminiKeyInput');
-      const btnTranscribeAudio = $('btnTranscribeAudio');
-
-      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-      let isRecording = false;
-      let recognition = null;
-      let voiceLang = 'ar-SA';
-      let voiceRestartTimer = null;
-
-      let mediaRecorder = null;
-      let audioChunks = [];
-      let recordedBlob = null;
-      let audioRecInterval = null;
-      let audioRecSeconds = 0;
-
-      try {
-        const savedKey = localStorage.getItem('jh_word_gemini_key');
-        if (savedKey) geminiKeyInput.value = savedKey;
-      } catch (_) {}
-
-      geminiKeyInput.addEventListener('change', () => {
-        try { localStorage.setItem('jh_word_gemini_key', geminiKeyInput.value.trim()); } catch (_) {}
-      });
-
-      function switchVoiceTab(tab) {
-        const isKb = tab === 'kb';
-        panelKbMic.style.display = isKb ? 'block' : 'none';
-        panelAudioRec.style.display = isKb ? 'none' : 'block';
-        btnTabKbMic.classList.toggle('primary-outline', isKb);
-        btnTabAudioRec.classList.toggle('primary-outline', !isKb);
-      }
-
-      btnTabKbMic.addEventListener('click', () => switchVoiceTab('kb'));
-      btnTabAudioRec.addEventListener('click', () => switchVoiceTab('audio'));
-
-      function openVoiceFallback(reason) {
-        voiceFallbackDesc.textContent = reason;
-        voiceFallbackInput.value = '';
-        switchVoiceTab('kb');
-        voiceFallbackModal.classList.add('open');
-        document.body.classList.add('modal-open');
-        setTimeout(() => voiceFallbackInput.focus(), 80);
-      }
-
-      function stopAudioRecIfRunning() {
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-          try { mediaRecorder.stop(); } catch (_) {}
-        }
-        clearInterval(audioRecInterval);
-      }
-
-      function closeVoiceFallback() {
-        stopAudioRecIfRunning();
-        voiceFallbackModal.classList.remove('open');
-        document.body.classList.remove('modal-open');
-      }
-
-      $('btnCancelVoiceFallback').addEventListener('click', closeVoiceFallback);
-      $('btnCancelAudioRec').addEventListener('click', closeVoiceFallback);
-      voiceFallbackModal.addEventListener('click', (e) => { if (e.target === voiceFallbackModal) closeVoiceFallback(); });
-
-      $('btnInsertVoiceFallback').addEventListener('click', () => {
-        const txt = voiceFallbackInput.value.trim();
-        closeVoiceFallback();
-        if (txt) {
-          insertDictatedText(txt);
-          showToast('تم إدراج النص في المستند');
-        }
-      });
-
-      $('btnRetryDirectMic').addEventListener('click', async () => {
-        closeVoiceFallback();
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach((t) => t.stop());
-          } catch (_) {}
-        }
-        startDictation();
-      });
-
-      function fmtSec(s) {
-        const m = String(Math.floor(s / 60)).padStart(2, '0');
-        const sec = String(s % 60).padStart(2, '0');
-        return m + ':' + sec;
-      }
-
-      btnAudioRecToggle.addEventListener('click', async () => {
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-          mediaRecorder.stop();
-          return;
-        }
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
-          showToast('المتصفح لا يدعم تسجيل الصوت في هذا الوضع');
-          return;
-        }
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          audioChunks = [];
-          recordedBlob = null;
-          btnTranscribeAudio.disabled = true;
-          audioPlayerWrap.style.display = 'none';
-
-          const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
-          mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-
-          mediaRecorder.ondataavailable = (ev) => {
-            if (ev.data && ev.data.size > 0) audioChunks.push(ev.data);
-          };
-          mediaRecorder.onstop = () => {
-            stream.getTracks().forEach((t) => t.stop());
-            clearInterval(audioRecInterval);
-            btnAudioRecToggle.textContent = 'إعادة التسجيل';
-            btnAudioRecToggle.classList.remove('danger-outline');
-            btnAudioRecToggle.classList.add('primary-outline');
-            if (audioChunks.length) {
-              recordedBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-              audioPlayback.src = URL.createObjectURL(recordedBlob);
-              audioPlayerWrap.style.display = 'block';
-              btnTranscribeAudio.disabled = false;
-            }
-          };
-
-          audioRecSeconds = 0;
-          audioRecTimer.textContent = '00:00';
-          audioRecInterval = setInterval(() => {
-            audioRecSeconds++;
-            audioRecTimer.textContent = fmtSec(audioRecSeconds);
-          }, 1000);
-
-          mediaRecorder.start();
-          btnAudioRecToggle.textContent = 'إيقاف التسجيل';
-          btnAudioRecToggle.classList.remove('primary-outline');
-          btnAudioRecToggle.classList.add('danger-outline');
-        } catch (err) {
-          showToast('تعذر الوصول للميكروفون — تأكد من فتح الصفحة عبر https:// والسماح بالمايك');
-        }
-      });
-
-      btnTranscribeAudio.addEventListener('click', async () => {
-        if (!recordedBlob) return;
-        const apiKey = geminiKeyInput.value.trim();
-        if (!apiKey) {
-          showToast('أدخل مفتاح Gemini API لتحويل التسجيل إلى نص');
-          geminiKeyInput.focus();
-          return;
-        }
-        try { localStorage.setItem('jh_word_gemini_key', apiKey); } catch (_) {}
-
-        btnTranscribeAudio.disabled = true;
-        btnTranscribeAudio.textContent = 'جاري التفريغ...';
-        try {
-          const base64Audio = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(String(reader.result || '').split(',')[1] || '');
-            reader.onerror = reject;
-            reader.readAsDataURL(recordedBlob);
-          });
-          const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{
-                parts: [
-                  { text: 'فرّغ هذا التسجيل الصوتي إلى نص عربي واضح ومضبوط الإملاء بدون أي مقدمات أو تعليقات، فقط النص المنطوق.' },
-                  { inline_data: { mime_type: recordedBlob.type || 'audio/webm', data: base64Audio } }
-                ]
-              }]
-            })
-          });
-          const data = await res.json();
-          const transcript = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
-            data.candidates[0].content.parts && data.candidates[0].content.parts.map(p => p.text || '').join(' ').trim();
-          if (!transcript) throw new Error((data && data.error && data.error.message) || 'لم يتم استخراج نص');
-          closeVoiceFallback();
-          insertDictatedText(transcript);
-          showToast('تم تفريغ الصوت وإدراجه في المستند');
-        } catch (err) {
-          showToast('تعذر التفريغ: ' + ((err && err.message) ? err.message : 'خطأ في الاتصال'));
-        } finally {
-          btnTranscribeAudio.disabled = false;
-          btnTranscribeAudio.textContent = 'تحويل الكلام لنص وإدراجه';
-        }
-      });
-
-      function placeCaretAtEnd() {
-        const range = document.createRange();
-        const lastEl = editor.lastElementChild;
-        if (lastEl && /^(P|H1|H2|H3|DIV|LI)$/i.test(lastEl.tagName)) {
-          range.selectNodeContents(lastEl);
-        } else {
-          range.selectNodeContents(editor);
-        }
-        range.collapse(false);
-        savedRange = range.cloneRange();
-        const sel = window.getSelection();
-        if (sel) {
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
-      }
-
-      function insertDictatedText(text) {
-        if (!text) return;
-        if (!savedRange || !editor.contains(savedRange.commonAncestorContainer)) {
-          placeCaretAtEnd();
-        }
-        let range = savedRange.cloneRange();
-        if (!range.collapsed) range.deleteContents();
-
-        let prefix = '';
-        if (range.startContainer.nodeType === 3 && range.startOffset > 0) {
-          const prevChar = range.startContainer.textContent.charAt(range.startOffset - 1);
-          if (prevChar && !/\s/.test(prevChar)) prefix = ' ';
-        }
-
-        const textNode = document.createTextNode(prefix + text + ' ');
-        range.insertNode(textNode);
-
-        const nextRange = document.createRange();
-        nextRange.setStartAfter(textNode);
-        nextRange.collapse(true);
-        savedRange = nextRange.cloneRange();
-
-        if (document.activeElement === editor) {
-          const sel = window.getSelection();
-          if (sel) {
-            sel.removeAllRanges();
-            sel.addRange(nextRange);
-          }
-        }
-
-        updateMetrics();
-        scheduleHistoryPush();
-        scheduleSave();
-      }
-
-      function setDictationUI(active) {
-        btnVoiceDictate.classList.toggle('recording', active);
-        voiceBtnLabel.textContent = active ? 'إيقاف' : 'صوت';
-        dictationBar.classList.toggle('open', active);
-        if (active) dictationText.textContent = 'جاري الاستماع... تحدث الآن';
-      }
-
-      function stopDictation() {
-        isRecording = false;
-        clearTimeout(voiceRestartTimer);
-        if (recognition) {
-          try { recognition.onend = null; recognition.stop(); } catch (_) {}
-          recognition = null;
-        }
-        setDictationUI(false);
-      }
-
-      function startDictation() {
-        if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
-          location.replace('https://' + location.host + location.pathname + location.search + location.hash);
-          return;
-        }
-        if (window.isSecureContext === false) {
-          openVoiceFallback('الملف مفتوح محلياً (' + location.protocol + ') لذا يمنع المتصفح المايك المباشر. استخدم "مايك الكيبورد" أدناه (يعمل بدون إنترنت):');
-          return;
-        }
-        if (!SpeechRec) {
-          openVoiceFallback('هذا المتصفح لا يدعم الإملاء المباشر. استخدم "مايك الكيبورد" أو "مسجل الصوت (AI)":');
-          return;
-        }
-        if (!savedRange || !editor.contains(savedRange.commonAncestorContainer)) {
-          placeCaretAtEnd();
-        }
-
-        const isMobileUA = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-        isRecording = true;
-        setDictationUI(true);
-        let emptyEndCount = 0;
-
-        const launchRec = () => {
-          if (!isRecording) return;
-          let hadFatalError = false;
-          let gotResult = false;
-          const startedAt = Date.now();
-          try {
-            const rec = new SpeechRec();
-            rec.lang = voiceLang;
-            rec.continuous = !isMobileUA;
-            rec.interimResults = true;
-            rec.maxAlternatives = 1;
-
-            rec.onstart = () => {
-              dictationText.textContent = 'تحدث الآن... الميكروفون يعمل';
-            };
-
-            rec.onresult = (event) => {
-              gotResult = true;
-              emptyEndCount = 0;
-              let finalTxt = '';
-              let interimTxt = '';
-              for (let i = event.resultIndex; i < event.results.length; i++) {
-                const res = event.results[i];
-                if (res.isFinal) finalTxt += res[0].transcript;
-                else interimTxt += res[0].transcript;
-              }
-              if (finalTxt.trim()) insertDictatedText(finalTxt.trim());
-              dictationText.textContent = interimTxt.trim() || 'جاري الاستماع... تحدث الآن';
-            };
-
-            rec.onerror = (event) => {
-              const err = event && event.error;
-              if (err === 'not-allowed' || err === 'service-not-allowed') {
-                hadFatalError = true;
-                stopDictation();
-                openVoiceFallback('محرك الصوت المباشر غير متاح أو مرفوض في إعدادات الهاتف. استخدم "مايك الكيبورد" (بدون إنترنت) أو جرّب تبويب "مسجل الصوت (AI)":');
-              } else if (err === 'audio-capture') {
-                hadFatalError = true;
-                stopDictation();
-                openVoiceFallback('لم يتم العثور على ميكروفون متاح. يمكنك استخدام "مايك الكيبورد" أدناه:');
-              } else if (err === 'network') {
-                hadFatalError = true;
-                stopDictation();
-                openVoiceFallback('خدمة الصوت السحابية للمتصفح غير متصلة. استخدم "مايك الكيبورد" أدناه:');
-              } else if (err === 'language-not-supported') {
-                hadFatalError = true;
-                stopDictation();
-                openVoiceFallback('لغة الإملاء (' + voiceLang + ') غير مدعومة في هذا المتصفح. استخدم "مايك الكيبورد" أو "مسجل الصوت (AI)":');
-              } else if (err === 'no-speech') {
-                dictationText.textContent = 'لم يتم سماع صوت... تحدث الآن';
-              } else if (err && err !== 'aborted') {
-                hadFatalError = true;
-                stopDictation();
-                openVoiceFallback('تعذر الإملاء المباشر (' + err + '). استخدم "مايك الكيبورد" أو "مسجل الصوت (AI)":');
-              }
-            };
-
-            rec.onend = () => {
-              if (!isRecording || hadFatalError) {
-                setDictationUI(false);
-                return;
-              }
-              const elapsed = Date.now() - startedAt;
-              if (!gotResult && elapsed < 700) {
-                emptyEndCount++;
-                if (emptyEndCount >= 2) {
-                  stopDictation();
-                  openVoiceFallback('توقف محرك الصوت في المتصفح تلقائياً. استخدم "مايك الكيبورد" (يعمل فوراً) أو "مسجل الصوت (AI)":');
-                  return;
-                }
-              }
-              clearTimeout(voiceRestartTimer);
-              voiceRestartTimer = setTimeout(launchRec, 250);
-            };
-
-            recognition = rec;
-            rec.start();
-          } catch (e) {
-            stopDictation();
-            openVoiceFallback('تعذر تشغيل الإملاء المباشر هنا. استخدم "مايك الكيبورد" أو "مسجل الصوت (AI)":');
-          }
-        };
-
-        launchRec();
-      }
-
-      btnVoiceDictate.addEventListener('pointerdown', () => {
-        saveSelection();
-      });
-      btnVoiceDictate.addEventListener('click', () => {
-        if (isRecording) stopDictation();
-        else startDictation();
-      });
-      btnVoiceStop.addEventListener('click', stopDictation);
-      btnVoiceLang.addEventListener('click', () => {
-        voiceLang = voiceLang === 'ar-SA' ? 'en-US' : 'ar-SA';
-        btnVoiceLang.textContent = voiceLang === 'ar-SA' ? 'عربي' : 'EN';
-        showToast(voiceLang === 'ar-SA' ? 'لغة الإملاء: العربية' : 'لغة الإملاء: الإنجليزية');
-        if (isRecording) {
-          stopDictation();
-          setTimeout(startDictation, 150);
-        }
-      });
-
-      /* ================= تشغيل ================= */
-      loadDocState();
-    })();
-  </script>
+</div>
+
+<!-- ═══════════════════════════════════════
+     رسالة Toast
+     ═══════════════════════════════════════ -->
+<div class="toast" id="toast"></div>
+
+
+<script>
+/* ═══════════════════════════════════════════
+   متغيرات عامة
+   ═══════════════════════════════════════════ */
+const editor = document.getElementById('editor');
+let pendingAction = null;
+let recognition = null;
+let isRecording = false;
+
+/* ═══════════════════════════════════════════
+   تحميل المستند المحفوظ عند بدء التشغيل
+   ═══════════════════════════════════════════ */
+(function init() {
+  const saved = localStorage.getItem('miniword_content');
+  if (saved) editor.innerHTML = saved;
+  const time = localStorage.getItem('miniword_time');
+  if (time) document.getElementById('saveInfo').textContent = '💾 آخر حفظ: ' + time;
+})();
+
+/* ═══════════════════════════════════════════
+   منع إغلاق الصفحة بالخطأ
+   ═══════════════════════════════════════════ */
+window.addEventListener('beforeunload', function(e) {
+  if (editor.innerHTML.trim() !== '') {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+/* ═══════════════════════════════════════════
+   نظام نوافذ التأكيد
+   ═══════════════════════════════════════════ */
+function confirmAction(message, action, type) {
+  const modal = document.getElementById('confirmModal');
+  const icon = document.getElementById('modalIcon');
+  const title = document.getElementById('modalTitle');
+  const msg = document.getElementById('modalMessage');
+  const btn = document.getElementById('modalConfirmBtn');
+
+  if (type === 'danger') {
+    icon.textContent = '⚠️';
+    title.textContent = 'تأكيد الإجراء';
+    btn.className = 'btn btn-danger';
+  } else {
+    icon.textContent = '✅';
+    title.textContent = 'تأكيد';
+    btn.className = 'btn btn-confirm';
+  }
+
+  msg.textContent = message;
+  pendingAction = action;
+  modal.classList.add('show');
+}
+
+function modalConfirm() {
+  closeModal();
+  if (pendingAction) {
+    pendingAction();
+    pendingAction = null;
+  }
+}
+
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('show');
+  pendingAction = null;
+}
+
+// إغلاق عند النقر خارج الصندوق
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+/* ═══════════════════════════════════════════
+   Toast Messages
+   ═══════════════════════════════════════════ */
+function showToast(message, type = '') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = 'toast ' + type;
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+/* ═══════════════════════════════════════════
+   عمليات الملفات
+   ═══════════════════════════════════════════ */
+
+// مستند جديد
+function newDocument() {
+  editor.innerHTML = '';
+  localStorage.removeItem('miniword_content');
+  localStorage.removeItem('miniword_time');
+  document.getElementById('saveInfo').textContent = '';
+  showToast('📄 تم إنشاء مستند جديد', 'success');
+}
+
+// حفظ محلي
+function saveDocument() {
+  localStorage.setItem('miniword_content', editor.innerHTML);
+  const now = new Date();
+  const timeStr = now.toLocaleString('ar-EG', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+  localStorage.setItem('miniword_time', timeStr);
+  document.getElementById('saveInfo').textContent = '💾 آخر حفظ: ' + timeStr;
+  showToast('✅ تم الحفظ بنجاح', 'success');
+}
+
+// تصدير Word
+function exportWord() {
+  const content = editor.innerHTML;
+  const html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:w="urn:schemas-microsoft-com:office:word"
+          xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { direction: rtl; font-family: 'Cairo', 'Arial', sans-serif; font-size: 14pt; line-height: 1.8; text-align: right; }
+        @page { size: A4; margin: 2cm; }
+      </style>
+    </head>
+    <body>${content}</body>
+    </html>`;
+  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'مستند_Mini_Word.doc';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📥 تم تنزيل ملف Word', 'success');
+}
+
+// تصدير PDF
+function exportPDF() {
+  const content = editor.cloneNode(true);
+  // تطبيق أنماط مباشرة على العنصر المستنسخ
+  content.style.direction = 'rtl';
+  content.style.textAlign = 'right';
+  content.style.fontFamily = "'Cairo', 'Tajawal', sans-serif";
+  content.style.fontSize = '14px';
+  content.style.lineHeight = '1.9';
+  content.style.padding = '0';
+
+  const opt = {
+    margin:       [15, 15, 15, 15],
+    filename:     'مستند_Mini_Word.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  // التحقق من وجود html2pdf
+  if (typeof html2pdf !== 'undefined') {
+    html2pdf().set(opt).from(content).save().then(() => {
+      showToast('📥 تم تصدير ملف PDF', 'success');
+    }).catch(() => {
+      // fallback: استخدم الطباعة
+      printAsPDF();
+    });
+  } else {
+    printAsPDF();
+  }
+}
+
+function printAsPDF() {
+  const printWin = window.open('', '_blank');
+  printWin.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+      <style>
+        body { direction: rtl; font-family: 'Cairo', sans-serif; font-size: 14pt; line-height: 1.9; text-align: right; padding: 40px; }
+        @page { size: A4; margin: 2cm; }
+      </style>
+    </head>
+    <body>${editor.innerHTML}</body>
+    </html>`);
+  printWin.document.close();
+  setTimeout(() => { printWin.print(); }, 800);
+  showToast('🖨️ تم فتح نافذة الطباعة / PDF', 'success');
+}
+
+/* ═══════════════════════════════════════════
+   المعاينة
+   ═══════════════════════════════════════════ */
+function openPreview() {
+  document.getElementById('previewBody').innerHTML = editor.innerHTML || '<p style="color:#9ca3af;">المستند فارغ</p>';
+  document.getElementById('previewOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePreview() {
+  document.getElementById('previewOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('previewOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closePreview();
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closePreview();
+    closeModal();
+  }
+});
+
+/* ═══════════════════════════════════════════
+   أدوات التنسيق
+   ═══════════════════════════════════════════ */
+function fmt(command, value) {
+  document.execCommand(command, false, value || null);
+  editor.focus();
+}
+
+function applyFontFamily(font) {
+  document.execCommand('fontName', false, font);
+  editor.focus();
+}
+
+function applyFontSize(size) {
+  document.execCommand('fontSize', false, size);
+  editor.focus();
+}
+
+function changeFontSizeStep(step) {
+  const sel = document.getElementById('fontSize');
+  let idx = sel.selectedIndex + step;
+  if (idx < 0) idx = 0;
+  if (idx >= sel.options.length) idx = sel.options.length - 1;
+  sel.selectedIndex = idx;
+  applyFontSize(sel.value);
+}
+
+function applyColor(command, color) {
+  if (command === 'hiliteColor') {
+    document.execCommand('hiliteColor', false, color);
+  } else {
+    document.execCommand('foreColor', false, color);
+  }
+  editor.focus();
+}
+
+/* ═══════════════════════════════════════════
+   الإملاء الصوتي - Web Speech API
+   ═══════════════════════════════════════════ */
+function toggleSpeech() {
+  if (isRecording) {
+    stopSpeech();
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    showToast('❌ متصفحك لا يدعم الإملاء الصوتي. جرّب Chrome أو Edge.', 'error');
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = 'ar-SA';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  let finalTranscript = '';
+
+  recognition.onstart = function() {
+    isRecording = true;
+    document.getElementById('micBtn').classList.add('recording');
+    document.getElementById('micLabel').textContent = 'جارٍ الاستماع...';
+    showToast('🎙️ بدأ الاستماع... تحدّث الآن', 'success');
+  };
+
+  recognition.onresult = function(event) {
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript + ' ';
+        insertTextAtCursor(transcript + ' ');
+      } else {
+        interim += transcript;
+      }
+    }
+  };
+
+  recognition.onerror = function(event) {
+    console.error('Speech error:', event.error);
+    if (event.error === 'not-allowed') {
+      showToast('❌ لم يتم منح إذن الوصول للمايكروفون. يرجى السماح من إعدادات المتصفح.', 'error');
+    } else if (event.error === 'no-speech') {
+      showToast('⚠️ لم يتم رصد أي كلام. حاول مرة أخرى.', 'error');
+    } else {
+      showToast('❌ خطأ في التعرف على الصوت: ' + event.error, 'error');
+    }
+    stopSpeech();
+  };
+
+  recognition.onend = function() {
+    // إعادة التشغيل تلقائياً إذا كان الزر لا يزال مفعلاً
+    if (isRecording) {
+      try { recognition.start(); } catch(e) { stopSpeech(); }
+    }
+  };
+
+  try {
+    recognition.start();
+  } catch(e) {
+    showToast('❌ فشل تشغيل المايكروفون', 'error');
+  }
+}
+
+function stopSpeech() {
+  isRecording = false;
+  if (recognition) {
+    recognition.onend = null;
+    recognition.abort();
+    recognition = null;
+  }
+  document.getElementById('micBtn').classList.remove('recording');
+  document.getElementById('micLabel').textContent = 'مايك';
+  showToast('🔇 تم إيقاف الاستماع', '');
+}
+
+function insertTextAtCursor(text) {
+  editor.focus();
+  const sel = window.getSelection();
+  if (sel.rangeCount > 0) {
+    // التحقق من أن التحديد داخل المحرر
+    let node = sel.anchorNode;
+    let insideEditor = false;
+    while (node) {
+      if (node === editor) { insideEditor = true; break; }
+      node = node.parentNode;
+    }
+    if (insideEditor) {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const textNode = document.createTextNode(text);
+      range.insertNode(textNode);
+      range.setStartAfter(textNode);
+      range.setEndAfter(textNode);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return;
+    }
+  }
+  // إذا لم يكن هناك تحديد في المحرر، أضف النص في النهاية
+  editor.innerHTML += text;
+}
+
+/* ═══════════════════════════════════════════
+   اختصارات لوحة المفاتيح
+   ═══════════════════════════════════════════ */
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
+    switch(e.key.toLowerCase()) {
+      case 's':
+        e.preventDefault();
+        confirmAction('هل تريد حفظ المستند في ذاكرة المتصفح؟', saveDocument, 'confirm');
+        break;
+      case 'b':
+        e.preventDefault();
+        fmt('bold');
+        break;
+      case 'i':
+        e.preventDefault();
+        fmt('italic');
+        break;
+      case 'u':
+        e.preventDefault();
+        fmt('underline');
+        break;
+    }
+  }
+});
+
+/* ═══════════════════════════════════════════
+   حفظ تلقائي كل 30 ثانية
+   ═══════════════════════════════════════════ */
+setInterval(function() {
+  if (editor.innerHTML.trim()) {
+    localStorage.setItem('miniword_content', editor.innerHTML);
+    const now = new Date();
+    const timeStr = now.toLocaleString('ar-EG', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+    localStorage.setItem('miniword_time', timeStr);
+    document.getElementById('saveInfo').textContent = '💾 حفظ تلقائي: ' + timeStr;
+  }
+}, 30000);
+
+</script>
 </body>
 </html>
