@@ -939,9 +939,13 @@ let savedSelection = null;
    تحميل المستند المحفوظ عند فتح الصفحة
    ═══════════════════════════════════════════ */
 (function init() {
-  const saved = localStorage.getItem('miniword_content');
-  if (saved) {
-    editor.innerHTML = saved;
+  try {
+    const saved = localStorage.getItem('miniword_content');
+    if (saved) {
+      editor.innerHTML = saved;
+    }
+  } catch (e) {
+    console.warn('localStorage unavailable:', e);
   }
 })();
 
@@ -981,10 +985,9 @@ function confirmAction(message, action, type) {
 }
 
 function modalConfirm() {
+  const action = pendingAction;
   closeModal();
-  if (pendingAction) {
-    const action = pendingAction;
-    pendingAction = null;
+  if (typeof action === 'function') {
     action();
   }
 }
@@ -1043,27 +1046,41 @@ function restoreSelectionState() {
 // 1. مستند جديد
 function newDocument() {
   editor.innerHTML = '';
-  localStorage.removeItem('miniword_content');
-  localStorage.removeItem('miniword_time');
+  try {
+    localStorage.removeItem('miniword_content');
+    localStorage.removeItem('miniword_time');
+  } catch (e) {
+    console.warn('localStorage unavailable:', e);
+  }
   hideImageToolbar();
   showToast('📄 تم فتح مستند جديد', 'success');
 }
 
 // 2. حفظ محلي
 function saveDocument() {
-  localStorage.setItem('miniword_content', editor.innerHTML);
-  const now = new Date();
-  const timeStr = now.toLocaleString('ar-EG', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
-  localStorage.setItem('miniword_time', timeStr);
-  showToast('✅ تم الحفظ بنجاح في المتصفح', 'success');
+  try {
+    localStorage.setItem('miniword_content', editor.innerHTML);
+    const now = new Date();
+    const timeStr = now.toLocaleString('ar-EG', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+    localStorage.setItem('miniword_time', timeStr);
+    showToast('✅ تم الحفظ بنجاح في المتصفح', 'success');
+  } catch (e) {
+    console.error('Save error:', e);
+    showToast('❌ تعذر الحفظ في المتصفح (المساحة ممتلئة أو التخزين محظور)', 'error');
+  }
 }
 
 // 3. تصدير Word بمقاس A4 واتجاه عربي
 function exportWord() {
-  const content = editor.innerHTML;
+  const clone = editor.cloneNode(true);
+  clone.querySelectorAll('img').forEach(img => {
+    img.classList.remove('img-selected');
+    img.style.outline = 'none';
+  });
+  const content = clone.innerHTML;
   const html = `
     <html xmlns:o="urn:schemas-microsoft-com:office:office"
           xmlns:w="urn:schemas-microsoft-com:office:word"
@@ -1111,13 +1128,15 @@ function exportWord() {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
   showToast('📥 تم تنزيل ملف Word', 'success');
 }
 
 // 4. تصدير PDF بمقاس A4
 function exportPDF() {
   const content = editor.cloneNode(true);
+  content.removeAttribute('id');
+  content.removeAttribute('contenteditable');
   content.querySelectorAll('img').forEach(img => {
     img.classList.remove('img-selected');
     img.style.outline = 'none';
@@ -1139,6 +1158,7 @@ function exportPDF() {
   };
 
   if (typeof html2pdf !== 'undefined') {
+    showToast('⏳ جاري تصدير ملف PDF...', '');
     html2pdf().set(opt).from(content).save().then(() => {
       showToast('📥 تم تصدير ملف PDF بنجاح', 'success');
     }).catch(() => {
@@ -1602,13 +1622,15 @@ document.addEventListener('keydown', function(e) {
    ═══════════════════════════════════════════ */
 setInterval(function() {
   if (editor.innerHTML.trim()) {
-    localStorage.setItem('miniword_content', editor.innerHTML);
-    const now = new Date();
-    const timeStr = now.toLocaleString('ar-EG', {
-      year: 'numeric', month: 'short', day: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    });
-    localStorage.setItem('miniword_time', timeStr);
+    try {
+      localStorage.setItem('miniword_content', editor.innerHTML);
+      const now = new Date();
+      const timeStr = now.toLocaleString('ar-EG', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+      localStorage.setItem('miniword_time', timeStr);
+    } catch (e) {}
   }
 }, 30000);
 
