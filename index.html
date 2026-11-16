@@ -259,9 +259,60 @@ body {
   padding: 18px 8px 50px;
 }
 
-.paper {
-  background: var(--paper-bg);
+.paper-stage {
+  position: relative;
   width: 210mm;
+  max-width: 100%;
+}
+
+.page-guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.page-badge {
+  position: absolute;
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 1px 8px;
+  border-radius: 999px;
+  opacity: 0.9;
+}
+
+.page-break-marker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 2px dashed #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-break-pill {
+  background: #e2e8f0;
+  color: #1e293b;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid #94a3b8;
+  box-shadow: 0 1px 4px rgba(0,0,0,.12);
+  transform: translateY(-50%);
+}
+
+.paper {
+  position: relative;
+  z-index: 1;
+  background: var(--paper-bg);
+  width: 100%;
   min-height: 297mm;
   max-width: 100%;
   box-sizing: border-box;
@@ -675,7 +726,7 @@ body {
     padding: 0 !important;
   }
 
-  .file-bar, .toolbar-wrap, .toast, .modal-overlay, .preview-overlay, .img-toolbar {
+  .file-bar, .toolbar-wrap, .toast, .modal-overlay, .preview-overlay, .img-toolbar, .page-guides {
     display: none !important;
   }
 
@@ -879,7 +930,10 @@ body {
      3. منطقة الكتابة — ورقة A4
      ═══════════════════════════════════════ -->
 <div class="editor-wrapper">
-  <div class="paper" id="editor" contenteditable="true" spellcheck="true"></div>
+  <div class="paper-stage" id="paperStage">
+    <div class="page-guides" id="pageGuides" aria-hidden="true"></div>
+    <div class="paper" id="editor" contenteditable="true" spellcheck="true"></div>
+  </div>
 </div>
 
 <!-- شريط أدوات الصورة العائم -->
@@ -947,7 +1001,35 @@ let savedSelection = null;
   } catch (e) {
     console.warn('localStorage unavailable:', e);
   }
+  updatePageGuides();
 })();
+
+function getA4PageHeight() {
+  const w = editor.clientWidth || 794;
+  return Math.max(360, Math.round(w * (297 / 210)));
+}
+
+function updatePageGuides() {
+  const pageHeight = getA4PageHeight();
+  editor.style.minHeight = '0px';
+  const contentHeight = editor.scrollHeight;
+  const totalPages = Math.max(1, Math.ceil(contentHeight / pageHeight));
+  editor.style.minHeight = (totalPages * pageHeight) + 'px';
+
+  const guides = document.getElementById('pageGuides');
+  if (!guides) return;
+  let html = `<div class="page-badge" style="top:6px;left:10px;">صفحة 1 / ${totalPages} (A4)</div>`;
+  for (let i = 1; i < totalPages; i++) {
+    const y = i * pageHeight;
+    html += `<div class="page-break-marker" style="top:${y}px;">
+      <span class="page-break-pill">بداية صفحة ${i + 1} (A4)</span>
+    </div>`;
+  }
+  guides.innerHTML = html;
+}
+
+editor.addEventListener('input', updatePageGuides);
+window.addEventListener('resize', updatePageGuides);
 
 /* ═══════════════════════════════════════════
    حماية منع إغلاق الصفحة بالخطأ
@@ -1053,6 +1135,7 @@ function newDocument() {
     console.warn('localStorage unavailable:', e);
   }
   hideImageToolbar();
+  updatePageGuides();
   showToast('📄 تم فتح مستند جديد', 'success');
 }
 
@@ -1073,98 +1156,379 @@ function saveDocument() {
   }
 }
 
-// 3. تصدير Word بمقاس A4 واتجاه عربي
+// مساعدات بناء ملف DOCX حقيقي (ZIP Store + OOXML) يفتح على أي جوال
+function xmlEscape(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function rgbToHex(color) {
+  if (!color) return null;
+  if (color.startsWith('#')) {
+    let h = color.slice(1);
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    return /^[0-9a-fA-F]{6}$/.test(h) ? h.toUpperCase() : null;
+  }
+  const m = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/i);
+  if (!m) return null;
+  return [m[1], m[2], m[3]].map(n => Number(n).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+function buildZipStore(entries) {
+  const enc = new TextEncoder();
+  const crcTable = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    crcTable[i] = c >>> 0;
+  }
+  function crc32(bytes) {
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) c = crcTable[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+
+  entries.forEach(entry => {
+    const nameBytes = enc.encode(entry.name);
+    const data = entry.data instanceof Uint8Array ? entry.data : enc.encode(entry.data);
+    const crc = crc32(data);
+    const size = data.length;
+
+    const lh = new Uint8Array(30 + nameBytes.length);
+    const lv = new DataView(lh.buffer);
+    lv.setUint32(0, 0x04034B50, true);
+    lv.setUint16(4, 20, true);
+    lv.setUint16(6, 0x0800, true);
+    lv.setUint16(8, 0, true);
+    lv.setUint16(10, 0, true);
+    lv.setUint16(12, 0, true);
+    lv.setUint32(14, crc, true);
+    lv.setUint32(18, size, true);
+    lv.setUint32(22, size, true);
+    lv.setUint16(26, nameBytes.length, true);
+    lv.setUint16(28, 0, true);
+    lh.set(nameBytes, 30);
+
+    localParts.push(lh, data);
+
+    const ch = new Uint8Array(46 + nameBytes.length);
+    const cv = new DataView(ch.buffer);
+    cv.setUint32(0, 0x02014B50, true);
+    cv.setUint16(4, 20, true);
+    cv.setUint16(6, 20, true);
+    cv.setUint16(8, 0x0800, true);
+    cv.setUint16(10, 0, true);
+    cv.setUint16(12, 0, true);
+    cv.setUint16(14, 0, true);
+    cv.setUint32(16, crc, true);
+    cv.setUint32(20, size, true);
+    cv.setUint32(24, size, true);
+    cv.setUint16(28, nameBytes.length, true);
+    cv.setUint16(30, 0, true);
+    cv.setUint16(32, 0, true);
+    cv.setUint16(34, 0, true);
+    cv.setUint16(36, 0, true);
+    cv.setUint32(38, 0, true);
+    cv.setUint32(42, offset, true);
+    ch.set(nameBytes, 46);
+
+    centralParts.push(ch);
+    offset += lh.length + size;
+  });
+
+  const centralSize = centralParts.reduce((a, b) => a + b.length, 0);
+  const eocd = new Uint8Array(22);
+  const ev = new DataView(eocd.buffer);
+  ev.setUint32(0, 0x06054B50, true);
+  ev.setUint16(4, 0, true);
+  ev.setUint16(6, 0, true);
+  ev.setUint16(8, entries.length, true);
+  ev.setUint16(10, entries.length, true);
+  ev.setUint32(12, centralSize, true);
+  ev.setUint32(16, offset, true);
+  ev.setUint16(20, 0, true);
+
+  return new Blob([...localParts, ...centralParts, eocd], {
+    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  });
+}
+
+// 3. تصدير Word حقيقي (.docx) بمقاس A4 واتجاه عربي يفتح على أي جوال
 function exportWord() {
   const clone = editor.cloneNode(true);
   clone.querySelectorAll('img').forEach(img => {
     img.classList.remove('img-selected');
     img.style.outline = 'none';
   });
-  const content = clone.innerHTML;
-  const html = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office"
-          xmlns:w="urn:schemas-microsoft-com:office:word"
-          xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-      <meta charset="utf-8">
-      <title>مستند Mini Word</title>
-      <!--[if gte mso 9]>
-      <xml>
-        <w:WordDocument>
-          <w:View>Print</w:View>
-          <w:Zoom>100</w:Zoom>
-          <w:DoNotOptimizeForBrowser/>
-        </w:WordDocument>
-      </xml>
-      <![endif]-->
-      <style>
-        @page {
-          size: 210mm 297mm;
-          margin: 15mm 15mm 15mm 15mm;
-        }
-        body {
-          direction: rtl;
-          font-family: 'Cairo', 'Arial', sans-serif;
-          font-size: 14pt;
-          line-height: 1.85;
-          text-align: right;
-          margin: 0;
-          padding: 0;
-        }
-        img {
-          max-width: 100%;
-          height: auto;
-        }
-      </style>
-    </head>
-    <body>${content}</body>
-    </html>`;
 
-  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
+  const mediaFiles = [];
+  const fontSizeMap = { '1': 20, '2': 24, '3': 28, '4': 36, '5': 48, '6': 64, '7': 96 };
+
+  function buildRunProps(st) {
+    let rPr = '<w:rtl/>';
+    if (st.bold) rPr += '<w:b/><w:bCs/>';
+    if (st.italic) rPr += '<w:i/><w:iCs/>';
+    if (st.underline) rPr += '<w:u w:val="single"/>';
+    if (st.strike) rPr += '<w:strike/>';
+    if (st.color) rPr += `<w:color w:val="${st.color}"/>`;
+    const sz = st.size || 28;
+    rPr += `<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>`;
+    const font = st.font || 'Cairo';
+    rPr += `<w:rFonts w:ascii="${xmlEscape(font)}" w:hAnsi="${xmlEscape(font)}" w:cs="${xmlEscape(font)}"/>`;
+    return `<w:rPr>${rPr}</w:rPr>`;
+  }
+
+  function extractRuns(node, st, runs) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const txt = node.nodeValue;
+      if (txt) {
+        runs.push(`<w:r>${buildRunProps(st)}<w:t xml:space="preserve">${xmlEscape(txt)}</w:t></w:r>`);
+      }
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    const tag = node.tagName.toUpperCase();
+    if (tag === 'BR') {
+      runs.push('<w:r><w:br/></w:r>');
+      return;
+    }
+    if (tag === 'IMG') {
+      const src = node.getAttribute('src') || '';
+      const m = src.match(/^data:image\/(png|jpeg|jpg|gif|webp);base64,(.+)$/i);
+      if (m) {
+        const ext = m[1].toLowerCase() === 'jpg' ? 'jpeg' : m[1].toLowerCase();
+        const bin = atob(m[2]);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const idx = mediaFiles.length + 1;
+        const rId = 'rIdImg' + idx;
+        mediaFiles.push({ name: `word/media/image${idx}.${ext}`, ext, rId, data: bytes });
+        const maxCx = 5400000; // ~15cm in EMU for A4
+        const w = node.naturalWidth || 400;
+        const h = node.naturalHeight || 300;
+        const cx = maxCx;
+        const cy = Math.round(maxCx * (h / Math.max(1, w)));
+        runs.push(`<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${idx}" name="Picture ${idx}"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${idx}" name="Picture ${idx}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`);
+      }
+      return;
+    }
+
+    const next = Object.assign({}, st);
+    if (tag === 'B' || tag === 'STRONG') next.bold = true;
+    if (tag === 'I' || tag === 'EM') next.italic = true;
+    if (tag === 'U') next.underline = true;
+    if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL') next.strike = true;
+    if (tag === 'FONT') {
+      if (node.getAttribute('face')) next.font = node.getAttribute('face');
+      if (node.getAttribute('color')) next.color = rgbToHex(node.getAttribute('color')) || next.color;
+      if (node.getAttribute('size') && fontSizeMap[node.getAttribute('size')]) next.size = fontSizeMap[node.getAttribute('size')];
+    }
+    const cs = node.style;
+    if (cs) {
+      if (cs.fontWeight === 'bold' || Number(cs.fontWeight) >= 600) next.bold = true;
+      if (cs.fontStyle === 'italic') next.italic = true;
+      if (cs.textDecoration && cs.textDecoration.includes('underline')) next.underline = true;
+      if (cs.textDecoration && cs.textDecoration.includes('line-through')) next.strike = true;
+      if (cs.color) next.color = rgbToHex(cs.color) || next.color;
+      if (cs.fontFamily) next.font = cs.fontFamily.replace(/['"]/g, '').split(',')[0].trim();
+    }
+
+    for (const child of node.childNodes) {
+      extractRuns(child, next, runs);
+    }
+  }
+
+  function getAlign(el) {
+    const a = (el.style && el.style.textAlign) || el.getAttribute && el.getAttribute('align') || '';
+    if (a === 'center') return 'center';
+    if (a === 'left') return 'left';
+    if (a === 'justify') return 'both';
+    return 'right';
+  }
+
+  const paragraphs = [];
+  function pushParagraph(runs, align) {
+    const jc = align || 'right';
+    paragraphs.push(`<w:p><w:pPr><w:bidi/><w:jc w:val="${jc}"/></w:pPr>${runs.join('')}</w:p>`);
+  }
+
+  let inlineBuffer = [];
+  function flushInline() {
+    if (inlineBuffer.length) {
+      pushParagraph(inlineBuffer, 'right');
+      inlineBuffer = [];
+    }
+  }
+
+  function walkBlocks(container) {
+    for (const node of container.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (node.nodeValue.trim() || node.nodeValue.includes(' ')) {
+          extractRuns(node, {}, inlineBuffer);
+        }
+        continue;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) continue;
+      const tag = node.tagName.toUpperCase();
+      if (tag === 'UL' || tag === 'OL') {
+        flushInline();
+        let idx = 1;
+        for (const li of node.children) {
+          if (li.tagName && li.tagName.toUpperCase() === 'LI') {
+            const prefix = tag === 'OL' ? `${idx++}. ` : '• ';
+            const runs = [`<w:r><w:rPr><w:rtl/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr><w:t xml:space="preserve">${xmlEscape(prefix)}</w:t></w:r>`];
+            extractRuns(li, {}, runs);
+            pushParagraph(runs, getAlign(li));
+          }
+        }
+      } else if (tag === 'P' || tag === 'DIV' || /^H[1-6]$/.test(tag)) {
+        flushInline();
+        const runs = [];
+        extractRuns(node, /^H[1-3]$/.test(tag) ? { bold: true, size: 34 } : {}, runs);
+        pushParagraph(runs, getAlign(node));
+      } else {
+        extractRuns(node, {}, inlineBuffer);
+      }
+    }
+    flushInline();
+  }
+
+  walkBlocks(clone);
+  if (!paragraphs.length) paragraphs.push('<w:p><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr></w:p>');
+
+  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+            xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">
+  <w:body>
+    ${paragraphs.join('')}
+    <w:sectPr>
+      <w:pgSz w:w="11906" w:h="16838"/>
+      <w:pgMar w:top="850" w:right="850" w:bottom="850" w:left="850" w:header="708" w:footer="708" w:gutter="0"/>
+      <w:bidi/>
+    </w:sectPr>
+  </w:body>
+</w:document>`;
+
+  const docRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  ${mediaFiles.map(m => `<Relationship Id="${m.rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${m.name.split('/').pop()}"/>`).join('')}
+</Relationships>`;
+
+  const rootRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+  const contentTypesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Default Extension="png" ContentType="image/png"/>
+  <Default Extension="jpeg" ContentType="image/jpeg"/>
+  <Default Extension="gif" ContentType="image/gif"/>
+  <Default Extension="webp" ContentType="image/webp"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`;
+
+  const entries = [
+    { name: '[Content_Types].xml', data: contentTypesXml },
+    { name: '_rels/.rels', data: rootRelsXml },
+    { name: 'word/_rels/document.xml.rels', data: docRelsXml },
+    { name: 'word/document.xml', data: documentXml },
+    ...mediaFiles.map(m => ({ name: m.name, data: m.data }))
+  ];
+
+  const blob = buildZipStore(entries);
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'مستند_Mini_Word.doc';
+  a.download = 'مستند_Mini_Word.docx';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  showToast('📥 تم تنزيل ملف Word', 'success');
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  showToast('📥 تم تنزيل ملف Word (.docx)', 'success');
 }
 
 // 4. تصدير PDF بمقاس A4
 function exportPDF() {
+  const host = document.createElement('div');
+  host.style.position = 'fixed';
+  host.style.left = '-99999px';
+  host.style.top = '0';
+  host.style.width = '180mm';
+  host.style.background = '#ffffff';
+  host.style.zIndex = '-1';
+
+  const pdfStyle = document.createElement('style');
+  pdfStyle.textContent = `
+    .pdf-export-root, .pdf-export-root * {
+      font-family: Tahoma, Arial, sans-serif !important;
+      letter-spacing: 0 !important;
+      word-spacing: normal !important;
+      font-variant-ligatures: normal !important;
+    }
+    .pdf-export-root img {
+      max-width: 100% !important;
+      height: auto !important;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+  `;
+  host.appendChild(pdfStyle);
+
   const content = editor.cloneNode(true);
   content.removeAttribute('id');
   content.removeAttribute('contenteditable');
+  content.className = 'pdf-export-root';
   content.querySelectorAll('img').forEach(img => {
     img.classList.remove('img-selected');
     img.style.outline = 'none';
   });
   content.style.direction = 'rtl';
   content.style.textAlign = 'right';
-  content.style.fontFamily = "'Cairo', 'Tajawal', sans-serif";
+  content.style.fontFamily = 'Tahoma, Arial, sans-serif';
   content.style.fontSize = '14px';
   content.style.lineHeight = '1.85';
   content.style.padding = '0';
-  content.style.width = '180mm'; // 210mm - 2*15mm margins
+  content.style.width = '180mm';
+  content.style.minHeight = 'auto';
+  content.style.boxShadow = 'none';
+
+  host.appendChild(content);
+  document.body.appendChild(host);
 
   const opt = {
     margin:       [15, 15, 15, 15],
     filename:     'مستند_Mini_Word.pdf',
     image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    html2canvas:  { scale: 2, useCORS: true, letterRendering: false, scrollX: 0, scrollY: 0 },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak:    { mode: ['css', 'legacy'], avoid: ['img'] }
   };
 
   if (typeof html2pdf !== 'undefined') {
     showToast('⏳ جاري تصدير ملف PDF...', '');
-    html2pdf().set(opt).from(content).save().then(() => {
+    const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+    fontsReady.then(() => html2pdf().set(opt).from(content).save()).then(() => {
       showToast('📥 تم تصدير ملف PDF بنجاح', 'success');
     }).catch(() => {
       printAsPDF();
+    }).finally(() => {
+      if (host.parentNode) host.parentNode.removeChild(host);
     });
   } else {
+    if (host.parentNode) host.parentNode.removeChild(host);
     printAsPDF();
   }
 }
