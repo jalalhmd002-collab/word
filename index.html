@@ -9,12 +9,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&amp;family=Cairo:wght@300;400;600;700&amp;family=Tajawal:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
 
-<!-- مكتبة html2pdf.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js" crossorigin="anonymous"></script>
-
-<!-- مكتبة PDF.js لقراءة واستيراد ملفات PDF -->
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js" crossorigin="anonymous"></script>
-
 <style>
 /* ═══════════════════════════════════════════
    المتغيرات وإعادة الضبط العامة
@@ -56,69 +50,116 @@ body {
 .file-bar {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 120;
   background: var(--primary);
   color: #fff;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  padding: 4px 8px;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 4px 10px;
   height: 40px;
   box-shadow: 0 2px 5px rgba(0,0,0,.15);
-  overflow: hidden;
+  overflow: visible;
   white-space: nowrap;
 }
 
-.file-bar .app-title {
-  font-weight: 700;
-  font-size: 13px;
+.file-menu-wrap {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
+  gap: 6px;
 }
 
-.file-bar .app-title svg {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-}
-
-.file-actions {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
-}
-
-.file-actions button {
-  background: rgba(255,255,255,.16);
+.file-menu-trigger {
+  background: rgba(255,255,255,.18);
   color: #fff;
   border: none;
   border-radius: var(--radius);
-  padding: 4px 7px;
-  font-size: 11px;
-  font-family: inherit;
-  font-weight: 500;
-  cursor: pointer;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
-  gap: 3px;
-  height: 28px;
+  justify-content: center;
+  cursor: pointer;
   transition: background .15s;
   flex-shrink: 0;
 }
 
-.file-actions button svg {
-  width: 13px;
-  height: 13px;
+.file-menu-trigger:hover,
+.file-menu-trigger.open {
+  background: rgba(255,255,255,.32);
+}
+
+.file-menu-trigger svg {
+  width: 16px;
+  height: 16px;
+}
+
+.save-status { margin-inline-start: auto; font-size: 11px; font-weight: 700; color: #bbf7d0; padding: 2px 7px; border-radius: 10px; background: rgba(255,255,255,.12); }
+.save-status.unsaved { color: #fef08a; }
+.file-bar .app-title {
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
+}
+
+.file-actions {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(15,23,42,.22);
+  padding: 6px;
+  display: none;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 155px;
+  z-index: 300;
+}
+
+.file-actions.show {
+  display: flex;
+}
+
+.file-actions button {
+  background: transparent;
+  color: var(--text);
+  border: none;
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: right;
+  transition: background .15s;
+}
+
+.file-actions button svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--primary);
 }
 
 .file-actions button:hover,
 .file-actions button:active {
-  background: rgba(255,255,255,.28);
+  background: #f1f5f9;
+}
+
+.file-actions button.active {
+  background: #dbeafe;
+  color: var(--primary-hover);
 }
 
 /* ═══════════════════════════════════════════
@@ -137,9 +178,9 @@ body {
 .toolbar-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 2px;
-  padding: 3px 5px;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 10px;
   overflow: hidden;
 }
 
@@ -150,16 +191,16 @@ body {
 .toolbar-group {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
 .toolbar-row .sep {
   width: 1px;
-  height: 22px;
+  height: 20px;
   background: var(--border);
   flex-shrink: 0;
-  margin: 0 1px;
+  margin: 0 4px;
 }
 
 .toolbar-row button,
@@ -184,6 +225,7 @@ body {
   min-width: 27px;
   flex-shrink: 0;
 }
+.format-clear-btn { width: 27px; min-width: 27px; padding: 0 !important; }
 
 .toolbar-row button:hover,
 .toolbar-row button:active {
@@ -204,15 +246,15 @@ body {
 }
 
 #fontFamily {
-  max-width: 82px;
-  min-width: 62px;
-  flex: 1 1 auto;
+  max-width: 115px;
+  min-width: 85px;
+  flex: 0 0 auto;
 }
 
 #fontSize {
-  max-width: 44px;
-  min-width: 36px;
-  flex: 0 1 auto;
+  max-width: 56px;
+  min-width: 44px;
+  flex: 0 0 auto;
 }
 
 .color-btn {
@@ -265,18 +307,34 @@ body {
   position: relative;
   width: 210mm;
   max-width: 100%;
+  transition: width .2s ease;
+}
+
+body.landscape-mode .paper-stage {
+  width: 297mm;
 }
 
 .page-guides {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 2;
-  overflow: hidden;
+  z-index: 0;
+}
+
+.page-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: var(--paper-bg);
+  border-radius: 3px;
+  box-shadow: 0 4px 16px rgba(15,23,42,.13);
+  border: 1px solid #cbd5e1;
 }
 
 .page-badge {
   position: absolute;
+  top: 7px;
+  left: 10px;
   font-size: 10px;
   font-weight: 700;
   color: #475569;
@@ -284,43 +342,33 @@ body {
   border: 1px solid #cbd5e1;
   padding: 1px 8px;
   border-radius: 999px;
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
-.page-break-marker {
+.page-gap-label {
   position: absolute;
-  left: 0;
-  right: 0;
-  height: 0;
-  border-top: 2px dashed #64748b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.page-break-pill {
-  background: #e2e8f0;
-  color: #1e293b;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg);
+  color: #475569;
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 10px;
+  padding: 1px 10px;
   border-radius: 999px;
   border: 1px solid #94a3b8;
-  box-shadow: 0 1px 4px rgba(0,0,0,.12);
-  transform: translateY(-50%);
+  z-index: 3;
 }
 
 .paper {
   position: relative;
   z-index: 1;
-  background: var(--paper-bg);
+  background: transparent;
   width: 100%;
   min-height: 297mm;
   max-width: 100%;
   box-sizing: border-box;
   padding: 20mm;
-  border-radius: 2px;
-  box-shadow: var(--shadow-lg);
+  border-radius: 3px;
   outline: none;
   font-size: 15px;
   line-height: 1.85;
@@ -339,7 +387,7 @@ body {
 }
 
 .paper:focus {
-  box-shadow: 0 0 0 3px rgba(37,99,235,.15), var(--shadow-lg);
+  box-shadow: none;
 }
 
 .paper img {
@@ -409,9 +457,10 @@ body {
 }
 
 /* ═══════════════════════════════════════════
-   شريط أدوات الصورة العائم
+   شريط أدوات الصورة والجدول العائم
    ═══════════════════════════════════════════ */
-.img-toolbar {
+.img-toolbar,
+.table-toolbar {
   position: fixed;
   z-index: 9000;
   background: #fff;
@@ -424,14 +473,16 @@ body {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  max-width: 330px;
+  max-width: 340px;
 }
 
-.img-toolbar.show {
+.img-toolbar.show,
+.table-toolbar.show {
   display: flex;
 }
 
-.img-toolbar button {
+.img-toolbar button,
+.table-toolbar button {
   background: #f1f5f9;
   color: var(--text);
   border: none;
@@ -448,19 +499,23 @@ body {
   transition: all .12s;
 }
 
-.img-toolbar button:hover {
+.img-toolbar button:hover,
+.table-toolbar button:hover {
   background: #e2e8f0;
 }
 
-.img-toolbar button.danger {
+.img-toolbar button.danger,
+.table-toolbar button.danger {
   color: var(--danger);
 }
 
-.img-toolbar button.danger:hover {
+.img-toolbar button.danger:hover,
+.table-toolbar button.danger:hover {
   background: #fef2f2;
 }
 
-.img-toolbar .sep {
+.img-toolbar .sep,
+.table-toolbar .sep {
   width: 1px;
   height: 20px;
   background: var(--border);
@@ -569,6 +624,70 @@ body {
   background: #e2e8f0;
 }
 
+.table-dim-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+  text-align: right;
+}
+
+.table-dim-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.table-dim-field input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  text-align: center;
+  outline: none;
+}
+
+.table-dim-field input:focus {
+  border-color: var(--primary);
+}
+
+.modal-filename-wrap {
+  display: none;
+  margin-bottom: 16px;
+  text-align: right;
+}
+
+.modal-filename-wrap.show {
+  display: block;
+}
+
+.modal-filename-wrap label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+
+.modal-filename-wrap input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+}
+
+.modal-filename-wrap input:focus {
+  border-color: var(--primary);
+}
+
 /* ═══════════════════════════════════════════
    نافذة المعاينة — A4
    ═══════════════════════════════════════════ */
@@ -593,13 +712,14 @@ body {
 }
 
 .preview-container {
-  background: #fff;
+  background: transparent;
   width: 210mm;
   max-width: 100%;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 16px 45px rgba(0,0,0,.3);
   margin: 10px auto 30px;
+}
+
+body.landscape-mode .preview-container {
+  width: 297mm;
 }
 
 .preview-header {
@@ -609,6 +729,14 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.22);
+}
+
+.preview-stage {
+  position: relative;
+  width: 100%;
 }
 
 .preview-header h3 {
@@ -631,6 +759,9 @@ body {
 }
 
 .preview-body {
+  position: relative;
+  z-index: 1;
+  background: transparent;
   padding: 20mm;
   direction: rtl;
   text-align: justify;
@@ -683,40 +814,30 @@ body {
    ═══════════════════════════════════════════ */
 @media (max-width: 520px) {
   .file-bar {
-    padding: 3px 5px;
+    padding: 3px 8px;
     height: 36px;
   }
   .file-bar .app-title {
-    font-size: 11px;
-    gap: 3px;
+    font-size: 13px;
   }
-  .file-bar .app-title svg {
-    width: 14px;
-    height: 14px;
-  }
-  .file-actions {
-    gap: 2px;
-  }
-  .file-actions button {
-    padding: 3px 5px;
-    font-size: 10px;
-    height: 25px;
-    gap: 2px;
-  }
-  .file-actions button svg {
-    width: 11px;
-    height: 11px;
+  .file-menu-trigger {
+    width: 26px;
+    height: 26px;
   }
 
   .toolbar-wrap {
     top: 36px;
   }
   .toolbar-row {
+    justify-content: space-between;
     padding: 2px 3px;
     gap: 1px;
   }
+  .toolbar-group {
+    gap: 2px;
+  }
   .toolbar-row button {
-    min-width: 25px;
+    min-width: 24px;
     height: 26px;
     padding: 2px 2px;
     font-size: 11px;
@@ -726,20 +847,31 @@ body {
     font-size: 10px;
   }
   #fontFamily {
-    max-width: 68px;
-    min-width: 54px;
+    min-width: 46px;
+    max-width: 60px;
   }
+  .format-clear-btn { width: 24px; min-width: 24px; }
   #fontSize {
     max-width: 36px;
-    min-width: 32px;
+    min-width: 30px;
   }
   .color-btn {
-    width: 25px;
+    width: 24px;
     height: 26px;
   }
   .toolbar-row .sep {
+    width: 1px;
     height: 18px;
+    margin: 0 1px;
   }
+  .toolbar-row:nth-child(2) button[onclick="openTableModal()"],
+  .toolbar-row:nth-child(2) button[onclick="triggerImageUpload()"],
+  .toolbar-row:nth-child(2) .mic-btn {
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+    gap: 1px !important;
+  }
+  .toolbar-row:nth-child(2) button span { font-size: 10px !important; }
 
   .editor-wrapper {
     padding: 8px 3px 30px;
@@ -747,8 +879,7 @@ body {
   .paper {
     padding: 16mm 10mm;
     min-height: calc(100vw * 1.4142);
-    border-radius: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    border-radius: 2px;
     font-size: 14px;
   }
 
@@ -756,7 +887,8 @@ body {
     padding: 14mm 8mm;
     min-height: auto;
   }
-  .img-toolbar {
+  .img-toolbar,
+  .table-toolbar {
     max-width: 94vw;
   }
 }
@@ -767,7 +899,7 @@ body {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 15mm;
+    margin: 0;
   }
 
   html, body {
@@ -776,7 +908,7 @@ body {
     padding: 0 !important;
   }
 
-  .file-bar, .toolbar-wrap, .toast, .modal-overlay, .preview-overlay, .img-toolbar, .page-guides {
+  .file-bar, .toolbar-wrap, .toast, .modal-overlay, .preview-overlay, .img-toolbar, .table-toolbar, .page-guides {
     display: none !important;
   }
 
@@ -786,14 +918,21 @@ body {
     display: block !important;
   }
 
+  .paper-stage {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   .paper {
     box-shadow: none !important;
     width: 100% !important;
     max-width: 100% !important;
     min-height: auto !important;
     border-radius: 0 !important;
-    padding: 0 !important;
+    padding: 15mm !important;
     margin: 0 !important;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
   }
 
   .paper img {
@@ -830,18 +969,19 @@ body {
      1. الشريط العلوي — سطر واحد مضغوط
      ═══════════════════════════════════════ -->
 <div class="file-bar">
-  <span class="app-title">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-    Mini Word
-  </span>
+  <div class="file-menu-wrap">
+    <button class="file-menu-trigger" id="fileMenuBtn" onclick="toggleFileMenu(event)" data-tooltip="القائمة">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+    </button>
+    <span class="app-title">Mini Word</span>
 
-  <div class="file-actions">
+    <div class="file-actions" id="fileActionsMenu" onclick="closeFileMenu()">
     <button onclick="confirmAction('هل تريد إنشاء مستند جديد؟\nسيتم مسح المحتوى الحالي.', newDocument, 'danger')" data-tooltip="مستند جديد">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
       <span>جديد</span>
     </button>
 
-    <button onclick="triggerOpenFile()" data-tooltip="فتح ملف (PDF, Word, ODT, MD, TXT, صور...)">
+    <button onclick="triggerOpenFile()" data-tooltip="فتح ملف (Word, ODT, MD, TXT, CSV, HTML, صور...)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
       <span>فتح</span>
     </button>
@@ -851,21 +991,27 @@ body {
       <span>حفظ</span>
     </button>
 
-    <button onclick="confirmAction('هل تريد تنزيل المستند بصيغة Word؟', exportWord, 'confirm')" data-tooltip="تصدير Word">
+    <button onclick="confirmAction('هل تريد تنزيل المستند بصيغة Word؟', exportWord, 'confirm', true)" data-tooltip="تصدير Word">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
       <span>Word</span>
     </button>
 
-    <button onclick="confirmAction('هل تريد تصدير المستند بصيغة PDF؟', exportPDF, 'confirm')" data-tooltip="تصدير PDF">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="20" height="20" rx="2"></rect><text x="12" y="16" text-anchor="middle" font-size="10" fill="currentColor" stroke="none" font-weight="bold">P</text></svg>
-      <span>PDF</span>
+    <button id="orientationBtn" onclick="toggleOrientation()" data-tooltip="تبديل اتجاه الصفحة (طولي / عرضي)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="5" width="18" height="14" rx="2"></rect></svg>
+      <span id="orientationLabel">بالعرض</span>
+    </button>
+
+    <button onclick="printDocument()" data-tooltip="طباعة أو حفظ بصيغة PDF">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 14h12v8H6z"></path></svg><span>طباعة / PDF</span>
     </button>
 
     <button onclick="openPreview()" data-tooltip="معاينة الطباعة">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
       <span>معاينة</span>
     </button>
+    </div>
   </div>
+  <span id="saveStatus" class="save-status">محفوظ ✓</span>
 </div>
 
 <!-- ═══════════════════════════════════════
@@ -901,40 +1047,41 @@ body {
     <div class="sep"></div>
 
     <div class="toolbar-group">
-      <button onclick="fmt('bold')" data-tooltip="عريض" style="font-weight:800;">B</button>
-      <button onclick="fmt('italic')" data-tooltip="مائل" style="font-style:italic;">I</button>
-      <button onclick="fmt('underline')" data-tooltip="تسطير" style="text-decoration:underline;">U</button>
-      <button onclick="fmt('strikeThrough')" data-tooltip="يتوسطه خط" style="text-decoration:line-through;">S</button>
+      <button data-cmd="bold" onclick="fmt('bold')" data-tooltip="عريض" style="font-weight:800;">B</button>
+      <button data-cmd="italic" onclick="fmt('italic')" data-tooltip="مائل" style="font-style:italic;">I</button>
+      <button data-cmd="underline" onclick="fmt('underline')" data-tooltip="تسطير" style="text-decoration:underline;">U</button>
+      <button data-cmd="strikeThrough" onclick="fmt('strikeThrough')" data-tooltip="يتوسطه خط" style="text-decoration:line-through;">S</button>
+      <button class="format-clear-btn" onclick="clearFormatting()" data-tooltip="مسح التنسيق" aria-label="مسح التنسيق" title="مسح التنسيق"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 16 8.5-8.5 7 7L10 23H5l-2-7Z"></path><path d="m14 5 2-2a2.1 2.1 0 0 1 3 0l2 2a2.1 2.1 0 0 1 0 3l-2 2"></path><path d="M2 22h20"></path></svg></button>
     </div>
 
     <div class="sep"></div>
 
     <div class="toolbar-group">
-      <label class="color-btn" data-tooltip="لون النص">
+      <label class="color-btn" id="foreColorBtn" data-tooltip="لون النص">
         <span style="font-size:13px;font-weight:700;color:var(--text);">A</span>
         <input type="color" id="foreColor" value="#000000" onchange="applyColor('foreColor', this.value)">
       </label>
 
-      <label class="color-btn" data-tooltip="لون التمييز">
+      <label class="color-btn" id="hiliteColorBtn" data-tooltip="لون التمييز">
         <span style="font-size:13px;background:#fef08a;padding:0 2px;border-radius:2px;font-weight:700;">A</span>
         <input type="color" id="hiliteColor" value="#ffff00" onchange="applyColor('hiliteColor', this.value)">
       </label>
     </div>
   </div>
 
-  <!-- السطر الثاني: المحاذاة + القوائم + التراجع + الصورة + المايك -->
+  <!-- السطر الثاني: المحاذاة + القوائم + التراجع + الجدول + الصورة + المايك -->
   <div class="toolbar-row">
     <div class="toolbar-group">
-      <button onclick="fmt('justifyRight')" data-tooltip="محاذاة يمين">
+      <button data-cmd="justifyRight" onclick="fmt('justifyRight')" data-tooltip="محاذاة يمين">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="10" x2="9" y2="10"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="9" y2="18"></line></svg>
       </button>
-      <button onclick="fmt('justifyCenter')" data-tooltip="توسيط">
+      <button data-cmd="justifyCenter" onclick="fmt('justifyCenter')" data-tooltip="توسيط">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="17" y1="10" x2="7" y2="10"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="7" y2="18"></line></svg>
       </button>
-      <button onclick="fmt('justifyLeft')" data-tooltip="محاذاة يسار">
+      <button data-cmd="justifyLeft" onclick="fmt('justifyLeft')" data-tooltip="محاذاة يسار">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="10" x2="15" y2="10"></line><line x1="3" y1="14" x2="21" y2="14"></line><line x1="3" y1="18" x2="15" y2="18"></line></svg>
       </button>
-      <button onclick="fmt('justifyFull')" data-tooltip="ضبط">
+      <button data-cmd="justifyFull" onclick="fmt('justifyFull')" data-tooltip="ضبط">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>
       </button>
     </div>
@@ -942,10 +1089,10 @@ body {
     <div class="sep"></div>
 
     <div class="toolbar-group">
-      <button onclick="fmt('insertUnorderedList')" data-tooltip="قائمة نقطية">
+      <button data-cmd="insertUnorderedList" onclick="fmt('insertUnorderedList')" data-tooltip="قائمة نقطية">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="9" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="9" y1="18" x2="21" y2="18"></line><circle cx="4" cy="6" r="1.5" fill="currentColor"></circle><circle cx="4" cy="12" r="1.5" fill="currentColor"></circle><circle cx="4" cy="18" r="1.5" fill="currentColor"></circle></svg>
       </button>
-      <button onclick="fmt('insertOrderedList')" data-tooltip="قائمة رقمية">
+      <button data-cmd="insertOrderedList" onclick="fmt('insertOrderedList')" data-tooltip="قائمة رقمية">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="10" y1="6" x2="21" y2="6"></line><line x1="10" y1="12" x2="21" y2="12"></line><line x1="10" y1="18" x2="21" y2="18"></line><text x="3" y="8" font-size="7" fill="currentColor" stroke="none">1</text><text x="3" y="14" font-size="7" fill="currentColor" stroke="none">2</text><text x="3" y="20" font-size="7" fill="currentColor" stroke="none">3</text></svg>
       </button>
     </div>
@@ -953,10 +1100,10 @@ body {
     <div class="sep"></div>
 
     <div class="toolbar-group">
-      <button onclick="fmt('undo')" data-tooltip="تراجع">
+      <button onclick="performUndo()" data-tooltip="تراجع">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
       </button>
-      <button onclick="fmt('redo')" data-tooltip="إعادة">
+      <button onclick="performRedo()" data-tooltip="إعادة">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"></path></svg>
       </button>
     </div>
@@ -964,6 +1111,11 @@ body {
     <div class="sep"></div>
 
     <div class="toolbar-group">
+      <button onclick="openTableModal()" data-tooltip="إدراج جدول" style="padding:0 5px;gap:2px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+        <span style="font-size:11px;">جدول</span>
+      </button>
+
       <button onclick="triggerImageUpload()" data-tooltip="إدراج صورة" style="padding:0 5px;gap:2px;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
         <span style="font-size:11px;">صورة</span>
@@ -1009,12 +1161,50 @@ body {
   <button class="danger" onclick="deleteSelectedImage()" data-tooltip="حذف الصورة">🗑️ حذف</button>
 </div>
 
+<!-- شريط أدوات الجدول العائم -->
+<div class="table-toolbar" id="tableToolbar">
+  <button onclick="tableAddRow()" data-tooltip="إضافة صف">+ صف</button>
+  <button onclick="tableDeleteRow()" data-tooltip="حذف الصف">− صف</button>
+  <div class="sep"></div>
+  <button onclick="tableAddCol()" data-tooltip="إضافة عمود">+ عمود</button>
+  <button onclick="tableDeleteCol()" data-tooltip="حذف العمود">− عمود</button>
+  <div class="sep"></div>
+  <button class="danger" onclick="tableDelete()" data-tooltip="حذف الجدول">🗑️ جدول</button>
+</div>
+
+<!-- نافذة إدراج جدول -->
+<div class="modal-overlay" id="tableInsertModal">
+  <div class="modal-box">
+    <div class="modal-icon">📊</div>
+    <h3>إدراج جدول جديد</h3>
+    <p>حدد عدد الصفوف والأعمدة:</p>
+    <div class="table-dim-grid">
+      <div class="table-dim-field">
+        <label for="tableRowsInput">عدد الصفوف</label>
+        <input type="number" id="tableRowsInput" min="1" max="50" value="3">
+      </div>
+      <div class="table-dim-field">
+        <label for="tableColsInput">عدد الأعمدة</label>
+        <input type="number" id="tableColsInput" min="1" max="20" value="3">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-confirm" onclick="confirmInsertTable()">إدراج الجدول</button>
+      <button class="btn btn-cancel" onclick="closeTableModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <!-- نافذة التأكيد المركزية الصارمة -->
 <div class="modal-overlay" id="confirmModal">
   <div class="modal-box">
     <div class="modal-icon" id="modalIcon">✅</div>
     <h3 id="modalTitle">تأكيد</h3>
     <p id="modalMessage">هل تريد تنزيل المستند بصيغة Word؟</p>
+    <div class="modal-filename-wrap" id="modalFileNameWrap">
+      <label for="modalFileNameInput">اسم الملف:</label>
+      <input type="text" id="modalFileNameInput" value="مستند_Mini_Word" placeholder="مستند_Mini_Word">
+    </div>
     <div class="modal-actions">
       <button class="btn btn-confirm" id="modalConfirmBtn" onclick="modalConfirm()">نعم، متأكد</button>
       <button class="btn btn-cancel" onclick="closeModal()">إلغاء</button>
@@ -1026,25 +1216,17 @@ body {
 <div class="preview-overlay" id="previewOverlay">
   <div class="preview-container">
     <div class="preview-header">
-      <h3>📄 معاينة الطباعة (A4)</h3>
+      <h3 id="previewTitle">📄 معاينة الطباعة (A4)</h3>
       <button onclick="closePreview()">✕ إغلاق</button>
     </div>
-    <div class="preview-body" id="previewBody"></div>
+    <div class="preview-stage">
+      <div class="page-guides" id="previewGuides" aria-hidden="true"></div>
+      <div class="preview-body" id="previewBody"></div>
+    </div>
   </div>
 </div>
 
-<!-- نافذة خيارات فتح ملف PDF -->
-<div class="modal-overlay" id="pdfModeModal">
-  <div class="modal-box">
-    <div class="modal-icon">📕</div>
-    <h3>فتح ملف PDF</h3>
-    <p id="pdfModeFileName">اختر طريقة فتح ملف PDF:</p>
-    <div class="modal-actions" style="flex-direction:column;">
-      <button class="btn btn-confirm" onclick="choosePdfOpenMode('text')">📝 استخراج النص (قابل للتعديل)</button>
-      <button class="btn btn-confirm" style="background:#0f766e;" onclick="choosePdfOpenMode('images')">🖼️ إدراج الصفحات كصور (بنفس التنسيق)</button>
-      <button class="btn btn-cancel" onclick="closePdfModeModal()">إلغاء</button>
-    </div>
-  </div>
+
 </div>
 
 <!-- رسالة Toast -->
@@ -1059,55 +1241,383 @@ let pendingAction = null;
 let recognition = null;
 let isRecording = false;
 let selectedImage = null;
+let activeTableCell = null;
 let savedSelection = null;
+let isLandscape = false;
+let isDirty = false;
+const PAGE_GAP = 18;
+const undoStack = [];
+const redoStack = [];
+const MAX_HISTORY = 50;
 
 /* ═══════════════════════════════════════════
-   تحميل المستند المحفوظ عند فتح الصفحة
+   التخزين الدائم عبر IndexedDB (لتجاوز حد 5MB)
    ═══════════════════════════════════════════ */
-(function init() {
+const DB_NAME = 'MiniWordDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'docStore';
+let dbPromise = null;
+
+function openMiniWordDB() {
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      reject(new Error('IndexedDB غير مدعوم في هذا المتصفح'));
+      return;
+    }
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = function(e) {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    req.onsuccess = function(e) {
+      resolve(e.target.result);
+    };
+    req.onerror = function() {
+      dbPromise = null;
+      reject(req.error || new Error('تعذر فتح قاعدة البيانات المحلية'));
+    };
+  });
+  return dbPromise;
+}
+
+async function idbGet(key) {
+  const db = await openMiniWordDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error || new Error('فشل القراءة من IndexedDB'));
+  });
+}
+
+async function idbSet(key, value) {
+  const db = await openMiniWordDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || req.error || new Error('فشل الكتابة في IndexedDB'));
+    tx.onabort = () => reject(tx.error || new Error('تم إلغاء عملية الحفظ'));
+  });
+}
+
+async function idbDelete(key) {
+  const db = await openMiniWordDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error('فشل الحذف من IndexedDB'));
+  });
+}
+
+/* ═══════════════════════════════════════════
+   التعقيم الأمني الصارم ضد XSS عند الاستيراد
+   ═══════════════════════════════════════════ */
+function sanitizeHtml(html) {
+  if (!html) return '';
+  const doc = new DOMParser().parseFromString(String(html), 'text/html');
+  const dangerousTags = ['script', 'iframe', 'object', 'embed', 'svg', 'style', 'meta', 'link', 'base', 'form'];
+  dangerousTags.forEach(tag => {
+    doc.querySelectorAll(tag).forEach(el => el.remove());
+  });
+
+  const urlAttrs = new Set(['href', 'src', 'action', 'formaction', 'xlink:href', 'poster', 'data', 'background']);
+  const allElements = doc.body ? doc.body.querySelectorAll('*') : [];
+  allElements.forEach(el => {
+    const attrs = Array.from(el.attributes);
+    for (const attr of attrs) {
+      const name = attr.name.toLowerCase();
+      if (name.startsWith('on')) {
+        el.removeAttribute(attr.name);
+        continue;
+      }
+      if (urlAttrs.has(name)) {
+        const cleaned = (attr.value || '').replace(/[\u0000-\u0020]+/g, '').toLowerCase();
+        if (cleaned.startsWith('javascript:') || cleaned.startsWith('vbscript:') || cleaned.startsWith('data:text/html')) {
+          el.removeAttribute(attr.name);
+        }
+      } else if (name === 'style') {
+        const allowedStyles = new Set(['color', 'background-color', 'font-size', 'font-family', 'text-align', 'font-weight', 'font-style', 'text-decoration', 'direction', 'margin', 'margin-left', 'margin-right', 'width', 'max-width', 'border-collapse', 'vertical-align']);
+        const safe = [];
+        for (const declaration of (attr.value || '').split(';')) {
+          const colon = declaration.indexOf(':');
+          if (colon < 1) continue;
+          const prop = declaration.slice(0, colon).trim().toLowerCase();
+          const value = declaration.slice(colon + 1).trim();
+          const compact = value.replace(/[\u0000-\u0020]+/g, '').toLowerCase();
+          if (!allowedStyles.has(prop) || !value || /url\s*\(|expression\s*\(|javascript:|vbscript:|@import/i.test(compact)) continue;
+          safe.push(prop + ': ' + value);
+        }
+        if (safe.length) el.setAttribute('style', safe.join('; '));
+        else el.removeAttribute(attr.name);
+      }
+    }
+  });
+
+  return doc.body ? doc.body.innerHTML : '';
+}
+
+/* ═══════════════════════════════════════════
+   ضغط الصور تلقائياً عبر Canvas (حد أقصى 1200px، جودة 0.82)
+   ═══════════════════════════════════════════ */
+function compressImageDataUrl(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = function() {
+      try {
+        const maxW = 1200;
+        let targetW = img.naturalWidth || img.width || 800;
+        let targetH = img.naturalHeight || img.height || 600;
+        if (targetW > maxW) {
+          targetH = Math.max(1, Math.round(targetH * (maxW / targetW)));
+          targetW = maxW;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(dataUrl);
+          return;
+        }
+        const isPng = /^data:image\/png/i.test(dataUrl);
+        if (!isPng) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, targetW, targetH);
+        }
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+
+        let keepPng = false;
+        if (isPng) {
+          try {
+            const pixels = ctx.getImageData(0, 0, targetW, targetH).data;
+            for (let i = 3; i < pixels.length; i += 4) {
+              if (pixels[i] < 250) {
+                keepPng = true;
+                break;
+              }
+            }
+          } catch (e) {
+            keepPng = true;
+          }
+          if (!keepPng) {
+            ctx.globalCompositeOperation = 'destination-over';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, targetW, targetH);
+            ctx.globalCompositeOperation = 'source-over';
+          }
+        }
+
+        const compressed = keepPng
+          ? canvas.toDataURL('image/png')
+          : canvas.toDataURL('image/jpeg', 0.82);
+        resolve(compressed);
+      } catch (err) {
+        reject(err);
+      }
+    };
+    img.onerror = function() {
+      reject(new Error('تعذر تحميل الصورة لضغطها'));
+    };
+    img.src = dataUrl;
+  });
+}
+
+function compressImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        const out = await compressImageDataUrl(e.target.result);
+        resolve(out);
+      } catch (err) {
+        reject(err);
+      }
+    };
+    reader.onerror = function() {
+      reject(new Error('فشلت قراءة ملف الصورة'));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ═══════════════════════════════════════════
+   تحميل المستند المحفوظ والترحيل التلقائي من localStorage
+   ═══════════════════════════════════════════ */
+(async function init() {
   try {
-    const saved = localStorage.getItem('miniword_content');
+    let saved = await idbGet('miniword_content');
+    let orient = await idbGet('miniword_orientation');
+
+    // ترحيل البيانات القديمة من localStorage عند أول تشغيل
+    let legacyContent = null;
+    let legacyOrient = null;
+    let legacyTime = null;
+    try {
+      legacyContent = localStorage.getItem('miniword_content');
+      legacyOrient = localStorage.getItem('miniword_orientation');
+      legacyTime = localStorage.getItem('miniword_time');
+    } catch (lsErr) {
+      console.warn('localStorage unavailable:', lsErr);
+    }
+
+    if (saved === undefined && legacyContent !== null) {
+      saved = legacyContent;
+      await idbSet('miniword_content', legacyContent);
+      try { localStorage.removeItem('miniword_content'); } catch (e) {}
+    }
+    if (orient === undefined && legacyOrient !== null) {
+      orient = legacyOrient;
+      await idbSet('miniword_orientation', legacyOrient);
+      try { localStorage.removeItem('miniword_orientation'); } catch (e) {}
+    }
+    if (legacyTime !== null) {
+      const existingTime = await idbGet('miniword_time');
+      if (existingTime === undefined) {
+        await idbSet('miniword_time', legacyTime);
+      }
+      try { localStorage.removeItem('miniword_time'); } catch (e) {}
+    }
+
     if (saved) {
       editor.innerHTML = saved;
     }
+    if (orient === 'landscape') {
+      applyOrientationState(true);
+    }
   } catch (e) {
-    console.warn('localStorage unavailable:', e);
+    console.warn('IndexedDB init fallback:', e);
+    try {
+      const lsSaved = localStorage.getItem('miniword_content');
+      if (lsSaved) editor.innerHTML = lsSaved;
+      if (localStorage.getItem('miniword_orientation') === 'landscape') {
+        applyOrientationState(true);
+      }
+    } catch (e2) {}
   }
   updatePageGuides();
+  syncToolbarState();
+  undoStack.length = 0; redoStack.length = 0; clearTimeout(historyTimer);
+  pushUndoSnapshot();
+  setSaveStatus(true);
 })();
 
-function getA4PageHeight() {
-  const w = editor.clientWidth || 794;
-  return Math.max(360, Math.round(w * (297 / 210)));
+function applyOrientationState(landscape) {
+  isLandscape = !!landscape;
+  document.body.classList.toggle('landscape-mode', isLandscape);
+  const btn = document.getElementById('orientationBtn');
+  const lbl = document.getElementById('orientationLabel');
+  if (btn) btn.classList.toggle('active', isLandscape);
+  if (lbl) lbl.textContent = isLandscape ? 'طولي' : 'بالعرض';
+
+  let printStyle = document.getElementById('printOrientationStyle');
+  if (!printStyle) {
+    printStyle = document.createElement('style');
+    printStyle.id = 'printOrientationStyle';
+    document.head.appendChild(printStyle);
+  }
+  printStyle.textContent = `@media print { @page { size: A4 ${isLandscape ? 'landscape' : 'portrait'}; margin: 0; } }`;
 }
+
+async function toggleOrientation() {
+  applyOrientationState(!isLandscape);
+  try {
+    await idbSet('miniword_orientation', isLandscape ? 'landscape' : 'portrait');
+  } catch (e) {
+    console.warn('Failed saving orientation:', e);
+    showToast('⚠️ تعذر حفظ إعداد اتجاه الصفحة', 'error');
+  }
+  updatePageGuides();
+  if (selectedImage) showImageToolbar(selectedImage);
+  if (activeTableCell) showTableToolbar(activeTableCell);
+  showToast(isLandscape ? '↔️ تم تحويل الصفحة إلى العرض (Landscape)' : '↕️ تم تحويل الصفحة إلى الطول (Portrait)', 'success');
+}
+
+function getA4PageHeight() {
+  const w = editor.clientWidth || (isLandscape ? 1123 : 794);
+  const ratio = isLandscape ? (210 / 297) : (297 / 210);
+  return Math.max(260, Math.round(w * ratio));
+}
+
+function toggleFileMenu(e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById('fileActionsMenu');
+  const btn = document.getElementById('fileMenuBtn');
+  if (!menu) return;
+  const isOpen = menu.classList.toggle('show');
+  if (btn) btn.classList.toggle('open', isOpen);
+}
+
+function closeFileMenu() {
+  const menu = document.getElementById('fileActionsMenu');
+  const btn = document.getElementById('fileMenuBtn');
+  if (menu) menu.classList.remove('show');
+  if (btn) btn.classList.remove('open');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.file-menu-wrap')) closeFileMenu();
+});
 
 function updatePageGuides() {
   const pageHeight = getA4PageHeight();
   editor.style.minHeight = '0px';
   const contentHeight = editor.scrollHeight;
-  const totalPages = Math.max(1, Math.ceil(contentHeight / pageHeight));
-  editor.style.minHeight = (totalPages * pageHeight) + 'px';
+  const totalPages = Math.max(1, Math.ceil(contentHeight / (pageHeight + PAGE_GAP)));
+  const totalHeight = totalPages * pageHeight + (totalPages - 1) * PAGE_GAP;
+  editor.style.minHeight = totalHeight + 'px';
 
   const guides = document.getElementById('pageGuides');
   if (!guides) return;
-  let html = `<div class="page-badge" style="top:6px;left:10px;">صفحة 1 / ${totalPages} (A4)</div>`;
-  for (let i = 1; i < totalPages; i++) {
-    const y = i * pageHeight;
-    html += `<div class="page-break-marker" style="top:${y}px;">
-      <span class="page-break-pill">بداية صفحة ${i + 1} (A4)</span>
+  const orientText = isLandscape ? ' عرضي' : '';
+  let html = '';
+  for (let i = 0; i < totalPages; i++) {
+    const topY = i * (pageHeight + PAGE_GAP);
+    html += `<div class="page-sheet" style="top:${topY}px;height:${pageHeight}px;">
+      <div class="page-badge">صفحة ${i + 1} / ${totalPages} (A4${orientText})</div>
     </div>`;
+    if (i > 0) {
+      html += `<div class="page-gap-label" style="top:${topY - PAGE_GAP / 2}px;">صفحة ${i + 1}</div>`;
+    }
   }
   guides.innerHTML = html;
 }
 
-editor.addEventListener('input', updatePageGuides);
-window.addEventListener('resize', updatePageGuides);
+let historyTimer = null;
+function setSaveStatus(saved) {
+  const badge = document.getElementById('saveStatus');
+  if (!badge) return;
+  badge.textContent = saved ? 'محفوظ ✓' : 'غير محفوظ...';
+  badge.classList.toggle('unsaved', !saved);
+}
+
+editor.addEventListener('input', function() {
+  isDirty = true;
+  setSaveStatus(false);
+  updatePageGuides();
+  clearTimeout(historyTimer);
+  historyTimer = setTimeout(() => pushUndoSnapshot(), 800);
+});
+window.addEventListener('resize', function() {
+  updatePageGuides();
+  if (document.getElementById('previewOverlay').classList.contains('show')) {
+    updatePreviewGuides();
+  }
+});
 
 /* ═══════════════════════════════════════════
    حماية منع إغلاق الصفحة بالخطأ
    ═══════════════════════════════════════════ */
 window.addEventListener('beforeunload', function(e) {
-  if (editor.innerHTML.trim() !== '') {
+  const hasActualContent = editor.innerText.trim() !== '' || !!editor.querySelector('img, table');
+  if (hasActualContent || isDirty) {
     e.preventDefault();
     e.returnValue = '';
   }
@@ -1116,12 +1626,14 @@ window.addEventListener('beforeunload', function(e) {
 /* ═══════════════════════════════════════════
    نظام نوافذ التأكيد الصارم (Modal)
    ═══════════════════════════════════════════ */
-function confirmAction(message, action, type) {
+function confirmAction(message, action, type, showFilename = false) {
   const modal = document.getElementById('confirmModal');
   const icon = document.getElementById('modalIcon');
   const title = document.getElementById('modalTitle');
   const msg = document.getElementById('modalMessage');
   const btn = document.getElementById('modalConfirmBtn');
+  const fnWrap = document.getElementById('modalFileNameWrap');
+  const fnInput = document.getElementById('modalFileNameInput');
 
   if (type === 'danger') {
     icon.textContent = '⚠️';
@@ -1133,22 +1645,85 @@ function confirmAction(message, action, type) {
     btn.className = 'btn btn-confirm';
   }
 
+  if (fnWrap) {
+    fnWrap.classList.toggle('show', !!showFilename);
+  }
+  if (showFilename && fnInput) {
+    if (!fnInput.value.trim()) fnInput.value = 'مستند_Mini_Word';
+  }
+
   msg.textContent = message;
-  pendingAction = action;
+  pendingAction = { fn: action, withFilename: !!showFilename };
   modal.classList.add('show');
+  if (showFilename && fnInput) {
+    setTimeout(() => { fnInput.focus(); fnInput.select(); }, 50);
+  }
 }
 
 function modalConfirm() {
-  const action = pendingAction;
+  const pending = pendingAction;
+  const fnInput = document.getElementById('modalFileNameInput');
+  const rawName = fnInput ? fnInput.value.trim() : '';
+  const cleanName = (rawName || 'مستند_Mini_Word').replace(/[\\/:*?"<>|]+/g, '_').replace(/\.(docx|pdf)$/i, '') || 'مستند_Mini_Word';
   closeModal();
-  if (typeof action === 'function') {
-    action();
+  if (pending && typeof pending.fn === 'function') {
+    if (pending.withFilename) {
+      pending.fn(cleanName);
+    } else {
+      pending.fn();
+    }
   }
 }
 
 function closeModal() {
   document.getElementById('confirmModal').classList.remove('show');
+  const fnWrap = document.getElementById('modalFileNameWrap');
+  if (fnWrap) fnWrap.classList.remove('show');
   pendingAction = null;
+}
+
+function pushUndoSnapshot() {
+  const html = editor.innerHTML;
+  if (undoStack.length && undoStack[undoStack.length - 1] === html) return;
+  undoStack.push(html);
+  if (undoStack.length > MAX_HISTORY) undoStack.shift();
+  redoStack.length = 0;
+}
+
+function restoreHistoryHtml(html) {
+  const prevScrollY = window.scrollY;
+  editor.innerHTML = html;
+  editor.focus();
+  window.scrollTo(window.scrollX, prevScrollY);
+  hideImageToolbar();
+  hideTableToolbar();
+  isDirty = true;
+  setSaveStatus(false);
+  updatePageGuides();
+  syncToolbarState();
+}
+
+function performUndo() {
+  clearTimeout(historyTimer);
+  const current = editor.innerHTML;
+  if (!undoStack.length) return;
+  if (undoStack.length === 1 && undoStack[0] === current) return;
+  if (undoStack[undoStack.length - 1] !== current) undoStack.push(current);
+  undoStack.pop();
+  redoStack.push(current);
+  if (redoStack.length > MAX_HISTORY) redoStack.shift();
+  const target = undoStack.length ? undoStack[undoStack.length - 1] : '<p><br></p>';
+  restoreHistoryHtml(target);
+}
+
+function performRedo() {
+  clearTimeout(historyTimer);
+  if (!redoStack.length) return;
+  const next = redoStack.pop();
+  if (undoStack[undoStack.length - 1] !== editor.innerHTML) undoStack.push(editor.innerHTML);
+  undoStack.push(next);
+  if (undoStack.length > MAX_HISTORY) undoStack.shift();
+  restoreHistoryHtml(next);
 }
 
 document.getElementById('confirmModal').addEventListener('click', function(e) {
@@ -1167,22 +1742,26 @@ function showToast(message, type = '') {
 }
 
 /* ═══════════════════════════════════════════
-   حفظ واسترجاع موضع المؤشر
+   حفظ واسترجاع موضع المؤشر + مزامنة شريط الأدوات
    ═══════════════════════════════════════════ */
+function isNodeInsideEditor(node) {
+  let curr = node;
+  while (curr) {
+    if (curr === editor) return true;
+    curr = curr.parentNode;
+  }
+  return false;
+}
+
 function saveSelectionState() {
   const sel = window.getSelection();
   if (sel && sel.rangeCount > 0) {
     const range = sel.getRangeAt(0);
-    let node = range.startContainer;
-    while (node) {
-      if (node === editor) {
-        savedSelection = range.cloneRange();
-        return;
-      }
-      node = node.parentNode;
+    if (isNodeInsideEditor(range.startContainer)) {
+      savedSelection = range.cloneRange();
+      return;
     }
   }
-  savedSelection = null;
 }
 
 function restoreSelectionState() {
@@ -1193,12 +1772,108 @@ function restoreSelectionState() {
   }
 }
 
+function syncToolbarState() {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0 || !isNodeInsideEditor(sel.anchorNode)) {
+    return;
+  }
+
+  saveSelectionState();
+
+  const cmds = [
+    'bold', 'italic', 'underline', 'strikeThrough',
+    'justifyRight', 'justifyCenter', 'justifyLeft', 'justifyFull',
+    'insertUnorderedList', 'insertOrderedList'
+  ];
+  cmds.forEach(cmd => {
+    const btn = document.querySelector(`[data-cmd="${cmd}"]`);
+    if (!btn) return;
+    let active = false;
+    try {
+      active = document.queryCommandState(cmd);
+    } catch (e) {}
+    btn.classList.toggle('active', !!active);
+  });
+
+  // تحديث شريط أدوات الجدول عند التنقل بلوحة المفاتيح أو المؤشر
+  const cellEl = sel.anchorNode.nodeType === 1
+    ? sel.anchorNode.closest('td, th')
+    : (sel.anchorNode.parentElement ? sel.anchorNode.parentElement.closest('td, th') : null);
+  if (cellEl && isNodeInsideEditor(cellEl)) {
+    if (activeTableCell !== cellEl) {
+      showTableToolbar(cellEl);
+    }
+  } else if (activeTableCell) {
+    hideTableToolbar();
+  }
+
+  // مزامنة نوع الخط وحجمه مع موضع المؤشر الحالي
+  let anchorEl = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
+  if (anchorEl && isNodeInsideEditor(anchorEl)) {
+    const cs = window.getComputedStyle(anchorEl);
+    const fontSelect = document.getElementById('fontFamily');
+    if (fontSelect) {
+      let qFont = '';
+      try { qFont = (document.queryCommandValue('fontName') || '').replace(/['"]/g, '').split(',')[0].trim(); } catch (e) {}
+      const computedFont = (cs.fontFamily || '').replace(/['"]/g, '').split(',')[0].trim();
+      const targetFont = (qFont || computedFont).toLowerCase();
+      for (const opt of fontSelect.options) {
+        if (opt.value.toLowerCase() === targetFont) {
+          fontSelect.value = opt.value;
+          break;
+        }
+      }
+    }
+
+    const sizeSelect = document.getElementById('fontSize');
+    if (sizeSelect) {
+      let qSize = '';
+      try { qSize = String(document.queryCommandValue('fontSize') || '').trim(); } catch (e) {}
+      if (/^[1-7]$/.test(qSize)) {
+        sizeSelect.value = qSize;
+      } else {
+        const px = parseFloat(cs.fontSize) || 15;
+        const sizeMap = [
+          { val: '1', px: 10 },
+          { val: '2', px: 13 },
+          { val: '3', px: 16 },
+          { val: '4', px: 18 },
+          { val: '5', px: 24 },
+          { val: '6', px: 32 },
+          { val: '7', px: 48 }
+        ];
+        let best = sizeMap[2];
+        let minDiff = Infinity;
+        for (const item of sizeMap) {
+          const diff = Math.abs(px - item.px);
+          if (diff < minDiff) {
+            minDiff = diff;
+            best = item;
+          }
+        }
+        sizeSelect.value = best.val;
+      }
+    }
+  }
+}
+
+document.addEventListener('selectionchange', syncToolbarState);
+editor.addEventListener('keyup', syncToolbarState);
+editor.addEventListener('mouseup', syncToolbarState);
+
+// حفظ موضع التحديد عند لمس أو النقر على قوائم الخطوط والألوان (للهواتف)
+['fontFamily', 'fontSize', 'foreColor', 'hiliteColor', 'foreColorBtn', 'hiliteColorBtn'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('touchstart', saveSelectionState, { passive: true });
+  el.addEventListener('mousedown', saveSelectionState);
+});
+
 /* ═══════════════════════════════════════════
    عمليات الملفات والتصدير
    ═══════════════════════════════════════════ */
 
-// 0. فتح ملف بجميع الصيغ (الحديثة والتقليدية و PDF)
-let pendingPdfFile = null;
+// 0. فتح ملف بالصيغ الأساسية النظيفة
 
 function triggerOpenFile() {
   const input = document.getElementById('openFileInput');
@@ -1252,13 +1927,27 @@ function decodeTextBuffer(buffer) {
   }
 }
 
-function applyOpenedHtml(htmlContent, fileName) {
-  editor.innerHTML = htmlContent || '<p><br></p>';
+async function applyOpenedHtml(htmlContent, fileName, shouldSanitize = true) {
+  clearTimeout(historyTimer);
+  savedSelection = null;
+  const safeHtml = shouldSanitize ? sanitizeHtml(htmlContent) : htmlContent;
+  editor.innerHTML = safeHtml || '<p><br></p>';
   hideImageToolbar();
+  hideTableToolbar();
   updatePageGuides();
+  syncToolbarState();
+  undoStack.length = 0;
+  redoStack.length = 0;
+  pushUndoSnapshot();
   try {
-    localStorage.setItem('miniword_content', editor.innerHTML);
-  } catch (e) {}
+    await idbSet('miniword_content', editor.innerHTML);
+    isDirty = false;
+    setSaveStatus(true);
+  } catch (e) {
+    console.warn('Failed auto-saving opened file:', e);
+    showToast('⚠️ تم فتح الملف ولكن تعذر حفظه تلقائياً', 'error');
+    return;
+  }
   showToast('📂 تم فتح الملف: ' + fileName, 'success');
 }
 
@@ -1344,6 +2033,24 @@ function guessImageMime(name) {
   return 'image/jpeg';
 }
 
+function resolveZipPath(baseDir, relTarget) {
+  if (!relTarget) return '';
+  if (relTarget.startsWith('/')) {
+    return relTarget.replace(/^\/+/, '');
+  }
+  const parts = (baseDir ? baseDir.split('/').filter(Boolean) : []).concat(relTarget.split('/'));
+  const stack = [];
+  for (const part of parts) {
+    if (!part || part === '.') continue;
+    if (part === '..') {
+      if (stack.length > 0) stack.pop();
+    } else {
+      stack.push(part);
+    }
+  }
+  return stack.join('/');
+}
+
 async function parseDocxToHtml(buffer) {
   const entries = await readZipEntries(buffer);
   const docBytes = entries['word/document.xml'];
@@ -1360,14 +2067,33 @@ async function parseDocxToHtml(buffer) {
       const id = r.getAttribute('Id');
       const target = r.getAttribute('Target') || '';
       if (id && target) {
-        const cleanTarget = target.startsWith('/') ? target.slice(1) : 'word/' + target.replace(/^\.\//, '');
-        relMap[id] = cleanTarget;
+        const normalized = resolveZipPath('word', target);
+        if (entries[normalized]) {
+          relMap[id] = normalized;
+        } else if (entries['word/' + normalized]) {
+          relMap[id] = 'word/' + normalized;
+        } else {
+          const baseName = normalized.split('/').pop();
+          const fallbackKey = Object.keys(entries).find(k => k.endsWith('/' + baseName) || k === baseName);
+          relMap[id] = fallbackKey || normalized;
+        }
       }
     }
   }
 
   const xmlDoc = parser.parseFromString(dec.decode(docBytes), 'application/xml');
   const body = xmlDoc.getElementsByTagNameNS('*', 'body')[0] || xmlDoc.documentElement;
+  const compressedMedia = {};
+  for (const mediaPath of new Set(Object.values(relMap))) {
+    const bytes = entries[mediaPath];
+    if (!bytes || !/^word\/media\//i.test(mediaPath)) continue;
+    try {
+      const originalUrl = `data:${guessImageMime(mediaPath)};base64,${uint8ToBase64(bytes)}`;
+      compressedMedia[mediaPath] = await compressImageDataUrl(originalUrl);
+    } catch (e) {
+      console.warn('DOCX image compression failed:', mediaPath, e);
+    }
+  }
 
   function firstChildByLocal(parent, localName) {
     for (const ch of parent.childNodes) {
@@ -1408,6 +2134,11 @@ async function parseDocxToHtml(buffer) {
         } else if (ln === 'highlight') {
           const v = getAttrVal(prop, 'val');
           if (v && v !== 'none') styles.push('background-color:' + escapeHtmlStr(v));
+        } else if (ln === 'shd') {
+          const fill = getAttrVal(prop, 'fill');
+          if (fill && fill !== 'auto' && /^[0-9a-fA-F]{6}$/.test(fill)) {
+            styles.push('background-color:#' + fill);
+          }
         } else if (ln === 'sz' || ln === 'szCs') {
           const v = parseInt(getAttrVal(prop, 'val'), 10);
           if (v > 0) styles.push('font-size:' + Math.round(v / 2) + 'pt');
@@ -1433,9 +2164,9 @@ async function parseDocxToHtml(buffer) {
           const rId = blip.getAttribute('r:embed') || blip.getAttribute('embed') || '';
           const mediaPath = relMap[rId];
           if (mediaPath && entries[mediaPath]) {
-            const mime = guessImageMime(mediaPath);
-            const b64 = uint8ToBase64(entries[mediaPath]);
-            inner += `<img src="data:${mime};base64,${b64}" style="max-width:100%;height:auto;border-radius:4px;display:block;margin:8px auto;">`;
+            const originalUrl = `data:${guessImageMime(mediaPath)};base64,${uint8ToBase64(entries[mediaPath])}`;
+            const imageUrl = compressedMedia[mediaPath] || originalUrl;
+            inner += `<img src="${imageUrl}" style="max-width:100%;height:auto;border-radius:4px;display:block;margin:8px auto;">`;
           }
         }
       }
@@ -1470,6 +2201,7 @@ async function parseDocxToHtml(buffer) {
         const sv = getAttrVal(pStyle, 'val');
         const hm = sv.match(/^Heading([1-6])$/i);
         if (hm) tag = 'h' + hm[1];
+        else if (/^Quote$/i.test(sv)) tag = 'blockquote';
       }
     }
 
@@ -1534,7 +2266,6 @@ async function parseDocxToHtml(buffer) {
       if (ch.nodeType === 1 && ch.localName === 'tr') trEls.push(ch);
     }
 
-    // Track vertical merge (rowspan)
     const gridRows = [];
     const openVMerge = {};
     trEls.forEach((trEl, rIdx) => {
@@ -1661,7 +2392,7 @@ async function parseDocxToHtml(buffer) {
     if (ch.localName === 'p') out += renderParagraph(ch);
     else if (ch.localName === 'tbl') out += renderTable(ch);
   }
-  return out || '<p><br></p>';
+  return sanitizeHtml(out || '<p><br></p>');
 }
 
 async function parseOdtToHtml(buffer) {
@@ -1670,6 +2401,16 @@ async function parseOdtToHtml(buffer) {
   if (!contentBytes) throw new Error('ملف ODT غير صالح');
   const xmlDoc = new DOMParser().parseFromString(new TextDecoder('utf-8').decode(contentBytes), 'application/xml');
   const textBody = xmlDoc.getElementsByTagNameNS('*', 'text')[0] || xmlDoc.documentElement;
+  const compressedMedia = {};
+  for (const [mediaPath, bytes] of Object.entries(entries)) {
+    if (!/^Pictures\//i.test(mediaPath) || !/\.(png|jpe?g|gif|webp|bmp)$/i.test(mediaPath)) continue;
+    try {
+      const originalUrl = `data:${guessImageMime(mediaPath)};base64,${uint8ToBase64(bytes)}`;
+      compressedMedia[mediaPath] = await compressImageDataUrl(originalUrl);
+    } catch (e) {
+      console.warn('ODT image compression failed:', mediaPath, e);
+    }
+  }
 
   let out = '';
   function walkOdt(node) {
@@ -1698,8 +2439,9 @@ async function parseOdtToHtml(buffer) {
         } else if (ln === 'image') {
           const href = ch.getAttribute('xlink:href') || '';
           if (href && entries[href]) {
-            const mime = guessImageMime(href);
-            html += `<img src="data:${mime};base64,${uint8ToBase64(entries[href])}" style="max-width:100%;height:auto;display:block;margin:8px auto;">`;
+            const originalUrl = `data:${guessImageMime(href)};base64,${uint8ToBase64(entries[href])}`;
+            const imageUrl = compressedMedia[href] || originalUrl;
+            html += `<img src="${imageUrl}" style="max-width:100%;height:auto;display:block;margin:8px auto;">`;
           }
         } else if (ln === 'line-break') {
           html += '<br>';
@@ -1713,173 +2455,9 @@ async function parseOdtToHtml(buffer) {
     return html;
   }
   out = walkOdt(textBody);
-  return out || '<p><br></p>';
+  return sanitizeHtml(out || '<p><br></p>');
 }
 
-async function parseXlsxToHtml(buffer) {
-  const entries = await readZipEntries(buffer);
-  const dec = new TextDecoder('utf-8');
-  const parser = new DOMParser();
-
-  const shared = [];
-  if (entries['xl/sharedStrings.xml']) {
-    const ssDoc = parser.parseFromString(dec.decode(entries['xl/sharedStrings.xml']), 'application/xml');
-    const sis = ssDoc.getElementsByTagNameNS('*', 'si');
-    for (const si of sis) {
-      shared.push(si.textContent || '');
-    }
-  }
-
-  const sheetNames = Object.keys(entries)
-    .filter(k => /^xl\/worksheets\/sheet\d+\.xml$/i.test(k))
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-
-  if (!sheetNames.length) throw new Error('لم يتم العثور على أوراق عمل');
-
-  let out = '';
-  sheetNames.forEach((sName, idx) => {
-    const sDoc = parser.parseFromString(dec.decode(entries[sName]), 'application/xml');
-    const rows = sDoc.getElementsByTagNameNS('*', 'row');
-    if (sheetNames.length > 1) out += `<h3>ورقة ${idx + 1}</h3>`;
-    let tbl = '<table>';
-    for (const row of rows) {
-      let tr = '<tr>';
-      const cells = row.getElementsByTagNameNS('*', 'c');
-      for (const c of cells) {
-        const t = c.getAttribute('t');
-        const vEl = c.getElementsByTagNameNS('*', 'v')[0];
-        const isEl = c.getElementsByTagNameNS('*', 'is')[0];
-        let val = '';
-        if (t === 's' && vEl) {
-          val = shared[parseInt(vEl.textContent, 10)] || '';
-        } else if (isEl) {
-          val = isEl.textContent || '';
-        } else if (vEl) {
-          val = vEl.textContent || '';
-        }
-        tr += `<td>${escapeHtmlStr(val)}</td>`;
-      }
-      tr += '</tr>';
-      tbl += tr;
-    }
-    tbl += '</table>';
-    out += tbl;
-  });
-  return out;
-}
-
-async function parsePptxToHtml(buffer) {
-  const entries = await readZipEntries(buffer);
-  const dec = new TextDecoder('utf-8');
-  const parser = new DOMParser();
-  const slides = Object.keys(entries)
-    .filter(k => /^ppt\/slides\/slide\d+\.xml$/i.test(k))
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  if (!slides.length) throw new Error('لم يتم العثور على شرائح');
-
-  let out = '';
-  slides.forEach((sPath, idx) => {
-    const doc = parser.parseFromString(dec.decode(entries[sPath]), 'application/xml');
-    out += `<h3>شريحة ${idx + 1}</h3>`;
-    const ps = doc.getElementsByTagNameNS('*', 'p');
-    for (const p of ps) {
-      const txt = (p.textContent || '').trim();
-      if (txt) out += `<p>${escapeHtmlStr(txt)}</p>`;
-    }
-    out += '<hr class="pdf-page-sep">';
-  });
-  return out;
-}
-
-async function parseEpubToHtml(buffer) {
-  const entries = await readZipEntries(buffer);
-  const dec = new TextDecoder('utf-8');
-  const parser = new DOMParser();
-  const htmlFiles = Object.keys(entries)
-    .filter(k => /\.(xhtml|html|htm)$/i.test(k) && !/nav\./i.test(k))
-    .sort();
-  if (!htmlFiles.length) throw new Error('لم يتم العثور على صفحات قابلة للقراءة');
-
-  let out = '';
-  for (const hf of htmlFiles) {
-    const doc = parser.parseFromString(dec.decode(entries[hf]), 'text/html');
-    doc.querySelectorAll('script, style, link').forEach(el => el.remove());
-    if (doc.body && doc.body.innerHTML.trim()) {
-      out += doc.body.innerHTML + '<hr class="pdf-page-sep">';
-    }
-  }
-  return out || '<p><br></p>';
-}
-
-function parseRtfToHtml(rtfText) {
-  const win1256 = new TextDecoder('windows-1256');
-  let out = '';
-  let i = 0;
-  let skipGroup = false;
-  const skipStack = [];
-
-  while (i < rtfText.length) {
-    const ch = rtfText[i];
-    if (ch === '{') {
-      skipStack.push(skipGroup);
-      const ahead = rtfText.slice(i + 1, i + 20);
-      if (/^\\(fonttbl|colortbl|stylesheet|info|pict|object|\*\\)/.test(ahead)) {
-        skipGroup = true;
-      }
-      i++;
-    } else if (ch === '}') {
-      skipGroup = skipStack.pop() || false;
-      i++;
-    } else if (skipGroup) {
-      i++;
-    } else if (ch === '\\') {
-      i++;
-      if (i >= rtfText.length) break;
-      const next = rtfText[i];
-      if (next === "'" && i + 2 < rtfText.length) {
-        const hexBytes = [];
-        while (i < rtfText.length && rtfText[i] === "'" && i + 2 < rtfText.length) {
-          hexBytes.push(parseInt(rtfText.slice(i + 1, i + 3), 16));
-          i += 3;
-          if (rtfText[i] === '\\' && rtfText[i + 1] === "'") {
-            i++;
-          } else {
-            break;
-          }
-        }
-        out += escapeHtmlStr(win1256.decode(new Uint8Array(hexBytes)));
-      } else if (next === '\\' || next === '{' || next === '}') {
-        out += escapeHtmlStr(next);
-        i++;
-      } else if (next === '\r' || next === '\n') {
-        i++;
-      } else {
-        const m = rtfText.slice(i).match(/^([a-zA-Z]+)(-?\d+)? ?/);
-        if (m) {
-          const word = m[1];
-          const param = m[2];
-          i += m[0].length;
-          if (word === 'par' || word === 'line') out += '<br>';
-          else if (word === 'tab') out += '&emsp;';
-          else if (word === 'u' && param !== undefined) {
-            let code = parseInt(param, 10);
-            if (code < 0) code += 65536;
-            out += escapeHtmlStr(String.fromCharCode(code));
-            if (rtfText[i] === '?') i++;
-          }
-        } else {
-          i++;
-        }
-      }
-    } else if (ch === '\r' || ch === '\n') {
-      i++;
-    } else {
-      out += escapeHtmlStr(ch);
-      i++;
-    }
-  }
-  return '<p>' + out.replace(/(<br>)+/g, '</p><p>') + '</p>';
-}
 
 function parseMarkdownToHtml(md) {
   const lines = md.replace(/\r\n/g, '\n').split('\n');
@@ -1980,112 +2558,20 @@ function parseCsvToHtml(text, delimiter) {
   return html;
 }
 
-function parseLegacyDocToHtml(buffer) {
-  const textAttempt = decodeTextBuffer(buffer).trim();
-  if (/^<!doctype|^<html|^<xml|^MIME-Version:/i.test(textAttempt)) {
-    const doc = new DOMParser().parseFromString(textAttempt, 'text/html');
-    doc.querySelectorAll('script, style, link').forEach(el => el.remove());
-    return doc.body ? doc.body.innerHTML : textAttempt;
-  }
-  const bytes = new Uint8Array(buffer);
-  let extracted = '';
-  let run = '';
-  for (let i = 0; i + 1 < bytes.length; i += 2) {
-    const code = bytes[i] | (bytes[i + 1] << 8);
-    if ((code >= 0x0600 && code <= 0x06FF) || (code >= 0x0020 && code <= 0x007E) || code === 0x000A || code === 0x000D) {
-      run += code === 0x000D ? '\n' : String.fromCharCode(code);
-    } else {
-      if (run.trim().length >= 4) extracted += run + '\n';
-      run = '';
-    }
-  }
-  if (run.trim().length >= 4) extracted += run;
-  if (!extracted.trim()) {
-    extracted = textAttempt.replace(/[^\u0600-\u06FF\u0020-\u007E\n]/g, ' ');
-  }
-  return extracted.split(/\n+/).filter(l => l.trim()).map(l => `<p>${escapeHtmlStr(l)}</p>`).join('') || '<p><br></p>';
-}
-
-function closePdfModeModal() {
-  document.getElementById('pdfModeModal').classList.remove('show');
-  pendingPdfFile = null;
-}
-
-async function choosePdfOpenMode(mode) {
-  const file = pendingPdfFile;
-  closePdfModeModal();
-  if (!file) return;
-
-  if (typeof pdfjsLib === 'undefined') {
-    showToast('❌ مكتبة PDF غير متوفرة حالياً (تحقق من الاتصال بالإنترنت)', 'error');
-    return;
-  }
-
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-  showToast('⏳ جاري فتح ملف PDF...', '');
-
-  try {
-    const buffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: buffer, isEvalSupported: false }).promise;
-    let outHtml = '';
-
-    if (mode === 'images') {
-      for (let p = 1; p <= pdf.numPages; p++) {
-        const page = await pdf.getPage(p);
-        const viewport = page.getViewport({ scale: 1.8 });
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        const ctx = canvas.getContext('2d');
-        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-        outHtml += `<p style="text-align:center;"><img src="${dataUrl}" style="max-width:100%;height:auto;border-radius:4px;display:block;margin:8px auto;"></p>`;
-      }
-    } else {
-      for (let p = 1; p <= pdf.numPages; p++) {
-        const page = await pdf.getPage(p);
-        const textContent = await page.getTextContent();
-        const linesMap = new Map();
-        for (const item of textContent.items) {
-          if (!item.str) continue;
-          const y = Math.round(item.transform[5] / 4) * 4;
-          if (!linesMap.has(y)) linesMap.set(y, []);
-          linesMap.get(y).push(item);
-        }
-        const sortedYs = Array.from(linesMap.keys()).sort((a, b) => b - a);
-        for (const y of sortedYs) {
-          const lineItems = linesMap.get(y).sort((a, b) => a.transform[4] - b.transform[4]);
-          const lineText = lineItems.map(it => it.str).join(' ').replace(/\s+/g, ' ').trim();
-          if (lineText) outHtml += `<p>${escapeHtmlStr(lineText)}</p>`;
-        }
-        if (p < pdf.numPages) outHtml += '<hr class="pdf-page-sep">';
-      }
-    }
-
-    applyOpenedHtml(outHtml, file.name);
-  } catch (err) {
-    console.error('PDF open error:', err);
-    showToast('❌ تعذر فتح ملف PDF: ' + (err.message || 'خطأ غير معروف'), 'error');
-  }
-}
 
 async function processOpenFile(file) {
   const ext = (file.name.split('.').pop() || '').toLowerCase();
   const type = (file.type || '').toLowerCase();
 
-  if (ext === 'pdf' || type === 'application/pdf') {
-    pendingPdfFile = file;
-    document.getElementById('pdfModeFileName').textContent = 'الملف: ' + file.name + '\nاختر طريقة فتح ملف PDF:';
-    document.getElementById('pdfModeModal').classList.add('show');
-    return;
-  }
-
   if (type.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'ico'].includes(ext)) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      applyOpenedHtml(`<p style="text-align:center;"><img src="${e.target.result}" style="max-width:100%;height:auto;border-radius:4px;display:block;margin:10px auto;"></p>`, file.name);
-    };
-    reader.readAsDataURL(file);
+    showToast('⏳ جاري ضغط الصورة وفتحها...', '');
+    try {
+      const compressedDataUrl = await compressImageFile(file);
+      await applyOpenedHtml(`<p style="text-align:center;"><img src="${compressedDataUrl}" style="max-width:100%;height:auto;border-radius:4px;display:block;margin:10px auto;"></p>`, file.name, false);
+    } catch (err) {
+      console.error('Image open error:', err);
+      showToast('❌ فشلت قراءة أو ضغط الصورة', 'error');
+    }
     return;
   }
 
@@ -2096,49 +2582,33 @@ async function processOpenFile(file) {
 
     if (ext === 'docx') {
       const htmlOut = await parseDocxToHtml(buffer);
-      applyOpenedHtml(htmlOut, file.name);
+      await applyOpenedHtml(htmlOut, file.name, false);
     } else if (ext === 'odt') {
       const htmlOut = await parseOdtToHtml(buffer);
-      applyOpenedHtml(htmlOut, file.name);
-    } else if (ext === 'xlsx') {
-      const htmlOut = await parseXlsxToHtml(buffer);
-      applyOpenedHtml(htmlOut, file.name);
-    } else if (ext === 'pptx') {
-      const htmlOut = await parsePptxToHtml(buffer);
-      applyOpenedHtml(htmlOut, file.name);
-    } else if (ext === 'epub') {
-      const htmlOut = await parseEpubToHtml(buffer);
-      applyOpenedHtml(htmlOut, file.name);
-    } else if (ext === 'doc') {
-      const htmlOut = parseLegacyDocToHtml(buffer);
-      applyOpenedHtml(htmlOut, file.name);
-    } else if (ext === 'rtf') {
-      const txt = decodeTextBuffer(buffer);
-      applyOpenedHtml(parseRtfToHtml(txt), file.name);
+      await applyOpenedHtml(htmlOut, file.name, false);
     } else if (ext === 'md' || ext === 'markdown') {
       const txt = decodeTextBuffer(buffer);
-      applyOpenedHtml(parseMarkdownToHtml(txt), file.name);
+      await applyOpenedHtml(parseMarkdownToHtml(txt), file.name, false);
     } else if (ext === 'html' || ext === 'htm' || ext === 'xhtml') {
       const txt = decodeTextBuffer(buffer);
-      const doc = new DOMParser().parseFromString(txt, 'text/html');
-      doc.querySelectorAll('script, iframe, object').forEach(el => el.remove());
-      applyOpenedHtml(doc.body ? doc.body.innerHTML : escapeHtmlStr(txt), file.name);
+      const sanitized = sanitizeHtml(txt);
+      await applyOpenedHtml(sanitized || escapeHtmlStr(txt), file.name, false);
     } else if (ext === 'csv' || ext === 'tsv') {
       const txt = decodeTextBuffer(buffer);
       const delim = ext === 'tsv' ? '\t' : (txt.split('\n')[0].includes(';') && !txt.split('\n')[0].includes(',') ? ';' : ',');
-      applyOpenedHtml(parseCsvToHtml(txt, delim), file.name);
+      await applyOpenedHtml(parseCsvToHtml(txt, delim), file.name, false);
     } else if (ext === 'json') {
       const txt = decodeTextBuffer(buffer);
       let formatted = txt;
       try { formatted = JSON.stringify(JSON.parse(txt), null, 2); } catch (e) {}
-      applyOpenedHtml(`<pre>${escapeHtmlStr(formatted)}</pre>`, file.name);
+      await applyOpenedHtml(`<pre>${escapeHtmlStr(formatted)}</pre>`, file.name, false);
     } else if (ext === 'xml' || ext === 'svg' || ext === 'yaml' || ext === 'yml' || ext === 'css' || ext === 'js') {
       const txt = decodeTextBuffer(buffer);
-      applyOpenedHtml(`<pre>${escapeHtmlStr(txt)}</pre>`, file.name);
+      await applyOpenedHtml(`<pre>${escapeHtmlStr(txt)}</pre>`, file.name, false);
     } else {
       const txt = decodeTextBuffer(buffer);
       const htmlOut = txt.replace(/\r\n/g, '\n').split('\n').map(l => l.trim() ? `<p>${escapeHtmlStr(l)}</p>` : '<p><br></p>').join('');
-      applyOpenedHtml(htmlOut, file.name);
+      await applyOpenedHtml(htmlOut, file.name, false);
     }
   } catch (err) {
     console.error('Open file error:', err);
@@ -2147,30 +2617,45 @@ async function processOpenFile(file) {
 }
 
 // 1. مستند جديد
-function newDocument() {
+async function newDocument() {
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
+  savedSelection = null;
   editor.innerHTML = '';
+  isDirty = true; setSaveStatus(false);
   try {
-    localStorage.removeItem('miniword_content');
-    localStorage.removeItem('miniword_time');
+    await idbDelete('miniword_content');
+    await idbDelete('miniword_time');
+    isDirty = false;
+    setSaveStatus(true);
+    try {
+      localStorage.removeItem('miniword_content');
+      localStorage.removeItem('miniword_time');
+    } catch (e) {}
   } catch (e) {
-    console.warn('localStorage unavailable:', e);
+    console.warn('IndexedDB delete error:', e);
+    showToast('⚠️ تعذر مسح النسخة المحفوظة محلياً', 'error');
   }
   hideImageToolbar();
+  hideTableToolbar();
   updatePageGuides();
+  syncToolbarState();
   showToast('📄 تم فتح مستند جديد', 'success');
 }
 
-// 2. حفظ محلي
-function saveDocument() {
+// 2. حفظ محلي عبر IndexedDB
+async function saveDocument() {
   try {
-    localStorage.setItem('miniword_content', editor.innerHTML);
+    await idbSet('miniword_content', editor.innerHTML);
     const now = new Date();
     const timeStr = now.toLocaleString('ar-EG', {
       year: 'numeric', month: 'short', day: 'numeric',
       hour: '2-digit', minute: '2-digit'
     });
-    localStorage.setItem('miniword_time', timeStr);
-    showToast('✅ تم الحفظ بنجاح في المتصفح', 'success');
+    await idbSet('miniword_time', timeStr);
+    isDirty = false;
+    setSaveStatus(true);
+    showToast('✅ تم الحفظ بنجاح في ذاكرة المتصفح (IndexedDB)', 'success');
   } catch (e) {
     console.error('Save error:', e);
     showToast('❌ تعذر الحفظ في المتصفح (المساحة ممتلئة أو التخزين محظور)', 'error');
@@ -2189,14 +2674,30 @@ function xmlEscape(str) {
 
 function rgbToHex(color) {
   if (!color) return null;
-  if (color.startsWith('#')) {
-    let h = color.slice(1);
+  const trimmed = color.trim().toLowerCase();
+  if (trimmed === 'transparent' || trimmed === 'none' || trimmed === 'inherit' || trimmed === 'initial') return null;
+  if (trimmed.startsWith('#')) {
+    let h = trimmed.slice(1);
     if (h.length === 3) h = h.split('').map(c => c + c).join('');
-    return /^[0-9a-fA-F]{6}$/.test(h) ? h.toUpperCase() : null;
+    return /^[0-9a-f]{6}$/i.test(h) ? h.toUpperCase() : null;
   }
-  const m = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/i);
+  const rgbaMatch = trimmed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/i);
+  if (!rgbaMatch) return null;
+  if (rgbaMatch[4] !== undefined && parseFloat(rgbaMatch[4]) === 0) return null;
+  return [rgbaMatch[1], rgbaMatch[2], rgbaMatch[3]]
+    .map(n => Math.max(0, Math.min(255, Number(n))).toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase();
+}
+
+function cssSizeToHalfPoints(sizeStr) {
+  if (!sizeStr) return null;
+  const m = String(sizeStr).trim().match(/^([\d.]+)\s*(px|pt)$/i);
   if (!m) return null;
-  return [m[1], m[2], m[3]].map(n => Number(n).toString(16).padStart(2, '0')).join('').toUpperCase();
+  const val = parseFloat(m[1]);
+  if (!(val > 0)) return null;
+  const pt = m[2].toLowerCase() === 'px' ? (val * 0.75) : val;
+  return Math.max(12, Math.round(pt * 2));
 }
 
 function buildZipStore(entries) {
@@ -2283,15 +2784,105 @@ function buildZipStore(entries) {
 }
 
 // 3. تصدير Word حقيقي (.docx) بمقاس A4 واتجاه عربي يفتح على أي جوال
-function exportWord() {
+async function convertWebpForDocx(dataUrl) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = function() {
+      try {
+        const w = img.naturalWidth || 400;
+        const h = img.naturalHeight || 300;
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(dataUrl); return; }
+        ctx.drawImage(img, 0, 0, w, h);
+        let hasAlpha = false;
+        try {
+          const px = ctx.getImageData(0, 0, w, h).data;
+          for (let i = 3; i < px.length; i += 4) {
+            if (px[i] < 250) { hasAlpha = true; break; }
+          }
+        } catch (e) {}
+        if (!hasAlpha) {
+          ctx.globalCompositeOperation = 'destination-over';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+          ctx.globalCompositeOperation = 'source-over';
+        }
+        resolve(hasAlpha ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.88));
+      } catch (e) {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
+async function exportWord(fileName) {
+  const liveImgs = Array.from(editor.querySelectorAll('img'));
+  const editorWidthPx = editor.clientWidth || (isLandscape ? 1000 : 700);
+  liveImgs.forEach(img => {
+    if (img.naturalWidth > 0) img.setAttribute('data-nw', String(img.naturalWidth));
+    if (img.naturalHeight > 0) img.setAttribute('data-nh', String(img.naturalHeight));
+    const cell = img.closest('td, th');
+    img.setAttribute('data-cw', String((cell && cell.clientWidth) || editorWidthPx));
+  });
   const clone = editor.cloneNode(true);
-  clone.querySelectorAll('img').forEach(img => {
+  liveImgs.forEach(img => {
+    img.removeAttribute('data-nw');
+    img.removeAttribute('data-nh');
+    img.removeAttribute('data-cw');
+  });
+
+  const cloneImgs = Array.from(clone.querySelectorAll('img'));
+  for (const img of cloneImgs) {
     img.classList.remove('img-selected');
     img.style.outline = 'none';
-  });
+    const src = img.getAttribute('src') || '';
+    if (/^data:image\/webp;base64,/i.test(src)) {
+      const converted = await convertWebpForDocx(src);
+      img.setAttribute('src', converted);
+    }
+  }
 
   const mediaFiles = [];
   const fontSizeMap = { '1': 20, '2': 24, '3': 28, '4': 36, '5': 48, '6': 64, '7': 96 };
+  const headingSizeMap = { H1: 44, H2: 36, H3: 32, H4: 28, H5: 26, H6: 24 };
+
+  function getImageAlignment(imgEl) {
+    const cs = imgEl.style || {};
+    const ml = (cs.marginLeft || '').trim();
+    const mr = (cs.marginRight || '').trim();
+    if (ml === 'auto' && mr === 'auto') return 'center';
+    if (ml === 'auto' && (mr === '0' || mr === '0px')) return 'right';
+    if ((ml === '0' || ml === '0px') && mr === 'auto') return 'left';
+    return null;
+  }
+
+  function getImageWidthRatio(imgEl) {
+    const cs = imgEl.style || {};
+    const cellWidth = parseFloat(imgEl.getAttribute('data-cw')) || editorWidthPx;
+    const cellRatio = Math.min(1, cellWidth / editorWidthPx);
+    const wStr = (cs.width || '').trim();
+    let ratio = 0;
+    if (wStr.endsWith('%')) {
+      const pct = parseFloat(wStr);
+      if (pct > 0) ratio = (pct / 100) * (cellWidth / editorWidthPx);
+    } else if (wStr.endsWith('px')) {
+      const px = parseFloat(wStr);
+      if (px > 0) ratio = px / editorWidthPx;
+    } else if (imgEl.getAttribute('width')) {
+      const attrW = parseFloat(imgEl.getAttribute('width'));
+      if (attrW > 0) ratio = attrW / editorWidthPx;
+    }
+    if (!ratio) {
+      const nw = parseFloat(imgEl.getAttribute('data-nw')) || imgEl.naturalWidth || 400;
+      ratio = nw / editorWidthPx;
+    }
+    return Math.max(0.01, Math.min(ratio, cellRatio, 1));
+  }
 
   function buildRunProps(st) {
     let rPr = st.ltr ? '' : '<w:rtl/>';
@@ -2300,6 +2891,7 @@ function exportWord() {
     if (st.underline) rPr += '<w:u w:val="single"/>';
     if (st.strike) rPr += '<w:strike/>';
     if (st.color) rPr += `<w:color w:val="${st.color}"/>`;
+    if (st.bgColor) rPr += `<w:shd w:val="clear" w:color="auto" w:fill="${st.bgColor}"/>`;
     const sz = st.size || 28;
     rPr += `<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>`;
     const font = st.font || 'Cairo';
@@ -2308,7 +2900,7 @@ function exportWord() {
     return `<w:rPr>${rPr}</w:rPr>`;
   }
 
-  function extractRuns(node, st, runs) {
+  function extractRuns(node, st, runs, meta) {
     if (node.nodeType === Node.TEXT_NODE) {
       const txt = node.nodeValue;
       if (txt) {
@@ -2334,11 +2926,16 @@ function exportWord() {
         const idx = mediaFiles.length + 1;
         const rId = 'rIdImg' + idx;
         mediaFiles.push({ name: `word/media/image${idx}.${ext}`, ext, rId, data: bytes });
-        const maxCx = 5400000;
-        const w = node.naturalWidth || 400;
-        const h = node.naturalHeight || 300;
-        const cx = maxCx;
-        const cy = Math.round(maxCx * (h / Math.max(1, w)));
+        const maxCx = isLandscape ? 8500000 : 5400000;
+        const ratio = getImageWidthRatio(node);
+        const w = parseFloat(node.getAttribute('data-nw')) || node.naturalWidth || 400;
+        const h = parseFloat(node.getAttribute('data-nh')) || node.naturalHeight || 300;
+        const cx = Math.max(180000, Math.round(maxCx * ratio));
+        const cy = Math.max(180000, Math.round(cx * (h / Math.max(1, w))));
+        const imgAlign = getImageAlignment(node);
+        if (meta && imgAlign && !meta.imgAlign) {
+          meta.imgAlign = imgAlign;
+        }
         runs.push(`<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${idx}" name="Picture ${idx}"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${idx}" name="Picture ${idx}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`);
       }
       return;
@@ -2349,6 +2946,7 @@ function exportWord() {
     if (tag === 'I' || tag === 'EM') next.italic = true;
     if (tag === 'U') next.underline = true;
     if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL') next.strike = true;
+    if (tag === 'MARK') next.bgColor = next.bgColor || 'FFFF00';
     if (node.getAttribute && node.getAttribute('dir') === 'ltr') next.ltr = true;
     if (node.getAttribute && node.getAttribute('dir') === 'rtl') next.ltr = false;
     if (tag === 'FONT') {
@@ -2365,11 +2963,16 @@ function exportWord() {
       if (cs.textDecoration && cs.textDecoration.includes('underline')) next.underline = true;
       if (cs.textDecoration && cs.textDecoration.includes('line-through')) next.strike = true;
       if (cs.color) next.color = rgbToHex(cs.color) || next.color;
+      if (cs.backgroundColor) next.bgColor = rgbToHex(cs.backgroundColor) || next.bgColor;
+      if (cs.fontSize) {
+        const hp = cssSizeToHalfPoints(cs.fontSize);
+        if (hp) next.size = hp;
+      }
       if (cs.fontFamily) next.font = cs.fontFamily.replace(/['"]/g, '').split(',')[0].trim();
     }
 
     for (const child of node.childNodes) {
-      extractRuns(child, next, runs);
+      extractRuns(child, next, runs, meta);
     }
   }
 
@@ -2388,21 +2991,23 @@ function exportWord() {
     while (curr && curr.nodeType === 1) {
       const a = (curr.style && curr.style.textAlign) || (curr.getAttribute && curr.getAttribute('align')) || '';
       if (a === 'center') return 'center';
+      if (a === 'left') return 'left';
+      if (a === 'right') return 'right';
       if (a === 'justify') return 'both';
       curr = curr.parentNode;
     }
     return defaultAlign || 'both';
   }
 
-  function makeParagraphXml(runs, align, dir) {
+  function makeParagraphXml(runs, align, dir, extraPPr = '') {
     const jc = align || 'both';
     const bidiTag = dir === 'ltr' ? '' : '<w:bidi w:val="1"/>';
-    return `<w:p><w:pPr>${bidiTag}<w:jc w:val="${jc}"/></w:pPr>${runs.join('')}</w:p>`;
+    return `<w:p><w:pPr>${bidiTag}<w:jc w:val="${jc}"/>${extraPPr}</w:pPr>${runs.join('')}</w:p>`;
   }
 
   const bodyBlocks = [];
-  function pushParagraph(runs, align, dir) {
-    bodyBlocks.push(makeParagraphXml(runs, align, dir || 'rtl'));
+  function pushParagraph(runs, align, dir, extraPPr = '') {
+    bodyBlocks.push(makeParagraphXml(runs, align, dir || 'rtl', extraPPr));
   }
 
   function buildTableXml(tblEl) {
@@ -2411,6 +3016,12 @@ function exportWord() {
     const rows = Array.from(tblEl.querySelectorAll(':scope > tr, :scope > thead > tr, :scope > tbody > tr, :scope > tfoot > tr'));
     if (!rows.length) return '';
 
+    const columnCount = Math.max(1, ...rows.map(row => Array.from(row.children).reduce((sum, cell) => {
+      const tag = cell.tagName ? cell.tagName.toUpperCase() : '';
+      return sum + ((tag === 'TD' || tag === 'TH') ? Math.max(1, parseInt(cell.getAttribute('colspan') || '1', 10)) : 0);
+    }, 0)));
+    const gridColWidth = Math.floor(9600 / columnCount);
+    const tblGridXml = `<w:tblGrid>${Array.from({length: columnCount}, () => `<w:gridCol w:w="${gridColWidth}"/>`).join('')}</w:tblGrid>`;
     const occupied = {};
     let trXml = '';
 
@@ -2468,30 +3079,33 @@ function exportWord() {
         const cellAlign = getAlign(cell, 'both');
 
         let cellInline = [];
+        let cellInlineMeta = {};
         function flushCellInline() {
           if (cellInline.length) {
-            cellBlocks.push(makeParagraphXml(cellInline, cellAlign, cellDir));
+            cellBlocks.push(makeParagraphXml(cellInline, cellInlineMeta.imgAlign || cellAlign, cellDir));
             cellInline = [];
+            cellInlineMeta = {};
           }
         }
 
         for (const ch of cell.childNodes) {
           if (ch.nodeType === Node.TEXT_NODE) {
             if (ch.nodeValue.trim() || ch.nodeValue.includes(' ')) {
-              extractRuns(ch, baseStyle, cellInline);
+              extractRuns(ch, baseStyle, cellInline, cellInlineMeta);
             }
           } else if (ch.nodeType === Node.ELEMENT_NODE) {
             const chTag = ch.tagName.toUpperCase();
             if (chTag === 'P' || chTag === 'DIV' || /^H[1-6]$/.test(chTag)) {
               flushCellInline();
               const runs = [];
-              extractRuns(ch, baseStyle, runs);
-              cellBlocks.push(makeParagraphXml(runs, getAlign(ch, cellAlign), getDir(ch)));
+              const pMeta = {};
+              extractRuns(ch, baseStyle, runs, pMeta);
+              cellBlocks.push(makeParagraphXml(runs, pMeta.imgAlign || getAlign(ch, cellAlign), getDir(ch)));
             } else if (chTag === 'TABLE') {
               flushCellInline();
               cellBlocks.push(buildTableXml(ch));
             } else {
-              extractRuns(ch, baseStyle, cellInline);
+              extractRuns(ch, baseStyle, cellInline, cellInlineMeta);
             }
           }
         }
@@ -2527,15 +3141,18 @@ function exportWord() {
           <w:right w:w="100" w:type="dxa"/>
         </w:tblCellMar>
       </w:tblPr>
+      ${tblGridXml}
       ${trXml}
     </w:tbl>`;
   }
 
   let inlineBuffer = [];
+  let inlineMeta = {};
   function flushInline(dir, align) {
     if (inlineBuffer.length) {
-      pushParagraph(inlineBuffer, align || 'both', dir || 'rtl');
+      pushParagraph(inlineBuffer, inlineMeta.imgAlign || align || 'both', dir || 'rtl');
       inlineBuffer = [];
+      inlineMeta = {};
     }
   }
 
@@ -2555,7 +3172,7 @@ function exportWord() {
     for (const node of container.childNodes) {
       if (node.nodeType === Node.TEXT_NODE) {
         if (node.nodeValue.trim() || node.nodeValue.includes(' ')) {
-          extractRuns(node, {}, inlineBuffer);
+          extractRuns(node, {}, inlineBuffer, inlineMeta);
         }
         continue;
       }
@@ -2563,34 +3180,46 @@ function exportWord() {
       const tag = node.tagName.toUpperCase();
 
       if (tag === 'TABLE') {
-        flushInline();
+        flushInline(getDir(container), getAlign(container));
         const tblXml = buildTableXml(node);
         if (tblXml) bodyBlocks.push(tblXml);
       } else if (tag === 'UL' || tag === 'OL') {
-        flushInline();
+        flushInline(getDir(container), getAlign(container));
         let idx = 1;
         for (const li of node.children) {
           if (li.tagName && li.tagName.toUpperCase() === 'LI') {
             const prefix = tag === 'OL' ? `${idx++}. ` : '• ';
             const runs = [`<w:r><w:rPr><w:rtl/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr><w:t xml:space="preserve">${xmlEscape(prefix)}</w:t></w:r>`];
-            extractRuns(li, {}, runs);
-            pushParagraph(runs, getAlign(li), getDir(li));
+            const liMeta = {};
+            extractRuns(li, {}, runs, liMeta);
+            pushParagraph(runs, liMeta.imgAlign || getAlign(li), getDir(li));
           }
         }
       } else if (tag === 'DIV' && hasBlockChild(node)) {
-        flushInline();
+        flushInline(getDir(container), getAlign(container));
         walkBlocks(node);
       } else if (tag === 'P' || tag === 'DIV' || tag === 'BLOCKQUOTE' || tag === 'PRE' || /^H[1-6]$/.test(tag)) {
-        flushInline();
+        flushInline(getDir(container), getAlign(container));
         const runs = [];
-        const base = /^H[1-3]$/.test(tag) ? { bold: true, size: 34 } : (tag === 'PRE' ? { ltr: true, font: 'Courier New', size: 22 } : {});
-        extractRuns(node, base, runs);
-        pushParagraph(runs, getAlign(node), getDir(node));
+        const pMeta = {};
+        let base = {};
+        let extraPPr = '';
+        if (/^H[1-6]$/.test(tag)) {
+          base = { bold: true, size: headingSizeMap[tag] || 28 };
+          extraPPr = `<w:pStyle w:val="Heading${tag.slice(1)}"/>`;
+        } else if (tag === 'BLOCKQUOTE') {
+          base = { color: '475569' };
+          extraPPr = '<w:pBdr><w:right w:val="single" w:sz="18" w:space="8" w:color="2563EB"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="F8FAFC"/><w:ind w:right="360"/>';
+        } else if (tag === 'PRE') {
+          base = { ltr: true, font: 'Courier New', size: 22 };
+        }
+        extractRuns(node, base, runs, pMeta);
+        pushParagraph(runs, pMeta.imgAlign || getAlign(node), getDir(node), extraPPr);
       } else {
-        extractRuns(node, {}, inlineBuffer);
+        extractRuns(node, {}, inlineBuffer, inlineMeta);
       }
     }
-    flushInline();
+    flushInline(getDir(container), getAlign(container));
   }
 
   walkBlocks(clone);
@@ -2603,7 +3232,7 @@ function exportWord() {
   <w:body>
     ${bodyBlocks.join('')}
     <w:sectPr>
-      <w:pgSz w:w="11906" w:h="16838"/>
+      ${isLandscape ? '<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>' : '<w:pgSz w:w="11906" w:h="16838"/>'}
       <w:pgMar w:top="850" w:right="850" w:bottom="850" w:left="850" w:header="708" w:footer="708" w:gutter="0"/>
       <w:bidi/>
     </w:sectPr>
@@ -2677,7 +3306,8 @@ function exportWord() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'مستند_Mini_Word.docx';
+  const finalName = (fileName && String(fileName).trim()) ? String(fileName).trim() : 'مستند_Mini_Word';
+  a.download = finalName + '.docx';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -2685,116 +3315,69 @@ function exportWord() {
   showToast('📥 تم تنزيل ملف Word (.docx)', 'success');
 }
 
-// 4. تصدير PDF بمقاس A4
-function exportPDF() {
-  const host = document.createElement('div');
-  host.style.position = 'fixed';
-  host.style.left = '-99999px';
-  host.style.top = '0';
-  host.style.width = '180mm';
-  host.style.background = '#ffffff';
-  host.style.zIndex = '-1';
-
-  const pdfStyle = document.createElement('style');
-  pdfStyle.textContent = `
-    .pdf-export-root, .pdf-export-root * {
-      font-family: Tahoma, Arial, sans-serif !important;
-      letter-spacing: 0 !important;
-      word-spacing: normal !important;
-      font-variant-ligatures: normal !important;
-    }
-    .pdf-export-root img {
-      max-width: 100% !important;
-      height: auto !important;
-      page-break-inside: avoid;
-      break-inside: avoid;
-    }
-  `;
-  host.appendChild(pdfStyle);
-
-  const content = editor.cloneNode(true);
-  content.removeAttribute('id');
-  content.removeAttribute('contenteditable');
-  content.className = 'pdf-export-root';
-  content.querySelectorAll('img').forEach(img => {
-    img.classList.remove('img-selected');
-    img.style.outline = 'none';
-  });
-  content.style.direction = 'rtl';
-  content.style.textAlign = 'justify';
-  content.style.fontFamily = 'Tahoma, Arial, sans-serif';
-  content.style.fontSize = '14px';
-  content.style.lineHeight = '1.85';
-  content.style.padding = '0';
-  content.style.width = '180mm';
-  content.style.minHeight = 'auto';
-  content.style.boxShadow = 'none';
-
-  host.appendChild(content);
-  document.body.appendChild(host);
-
-  const opt = {
-    margin:       [15, 15, 15, 15],
-    filename:     'مستند_Mini_Word.pdf',
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true, letterRendering: false, scrollX: 0, scrollY: 0 },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak:    { mode: ['css', 'legacy'], avoid: ['img'] }
+// 4. الطباعة المباشرة / حفظ بصيغة PDF عبر المتصفح
+function printDocument() {
+  showToast('اختر (حفظ بتنسيق PDF) من قائمة الطابعات', '');
+  const prevTitle = document.title;
+  document.title = '';
+  const restoreTitle = () => {
+    document.title = prevTitle;
+    window.removeEventListener('afterprint', restoreTitle);
   };
-
-  if (typeof html2pdf !== 'undefined') {
-    showToast('⏳ جاري تصدير ملف PDF...', '');
-    const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
-    fontsReady.then(() => html2pdf().set(opt).from(content).save()).then(() => {
-      showToast('📥 تم تصدير ملف PDF بنجاح', 'success');
-    }).catch(() => {
-      printAsPDF();
-    }).finally(() => {
-      if (host.parentNode) host.parentNode.removeChild(host);
-    });
-  } else {
-    if (host.parentNode) host.parentNode.removeChild(host);
-    printAsPDF();
-  }
-}
-
-function printAsPDF() {
-  const printWin = window.open('', '_blank');
-  if (!printWin) {
+  window.addEventListener('afterprint', restoreTitle);
+  setTimeout(() => {
     window.print();
-    return;
-  }
-  printWin.document.write(`<!DOCTYPE html>
-    <html dir="rtl" lang="ar">
-    <head>
-      <meta charset="UTF-8">
-      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-      <style>
-        @page { size: A4 portrait; margin: 15mm; }
-        body { direction: rtl; font-family: 'Cairo', sans-serif; font-size: 14pt; line-height: 1.85; text-align: justify; margin: 0; padding: 20px; }
-        img  { max-width: 100%; height: auto; }
-      </style>
-    </head>
-    <body>${editor.innerHTML}</body>
-    </html>`);
-  printWin.document.close();
-  setTimeout(() => { printWin.print(); }, 600);
-  showToast('🖨️ جاري فتح الطباعة / PDF', 'success');
+    setTimeout(restoreTitle, 1000);
+  }, 180);
 }
 
 /* ═══════════════════════════════════════════
    معاينة المستند — A4
    ═══════════════════════════════════════════ */
+function updatePreviewGuides() {
+  const previewBody = document.getElementById('previewBody');
+  const guides = document.getElementById('previewGuides');
+  if (!previewBody || !guides) return;
+
+  const w = previewBody.clientWidth || (isLandscape ? 1123 : 794);
+  const ratio = isLandscape ? (210 / 297) : (297 / 210);
+  const pageHeight = Math.max(260, Math.round(w * ratio));
+
+  previewBody.style.minHeight = '0px';
+  const contentHeight = previewBody.scrollHeight;
+  const totalPages = Math.max(1, Math.ceil(contentHeight / (pageHeight + PAGE_GAP)));
+  previewBody.style.minHeight = (totalPages * pageHeight + (totalPages - 1) * PAGE_GAP) + 'px';
+
+  const orientText = isLandscape ? ' عرضي' : '';
+  let html = '';
+  for (let i = 0; i < totalPages; i++) {
+    const topY = i * (pageHeight + PAGE_GAP);
+    html += `<div class="page-sheet" style="top:${topY}px;height:${pageHeight}px;">
+      <div class="page-badge">صفحة ${i + 1} / ${totalPages} (A4${orientText})</div>
+    </div>`;
+    if (i > 0) {
+      html += `<div class="page-gap-label" style="top:${topY - PAGE_GAP / 2}px;">صفحة ${i + 1}</div>`;
+    }
+  }
+  guides.innerHTML = html;
+}
+
 function openPreview() {
   const previewContent = editor.innerHTML || '<p style="color:#94a3b8;">المستند فارغ</p>';
-  document.getElementById('previewBody').innerHTML = previewContent;
-  document.getElementById('previewBody').querySelectorAll('img').forEach(img => {
+  const previewBody = document.getElementById('previewBody');
+  const previewTitle = document.getElementById('previewTitle');
+  if (previewTitle) {
+    previewTitle.textContent = `📄 معاينة الطباعة (A4${isLandscape ? ' عرضي' : ''})`;
+  }
+  previewBody.innerHTML = previewContent;
+  previewBody.querySelectorAll('img').forEach(img => {
     img.classList.remove('img-selected');
     img.style.cursor = 'default';
     img.style.outline = 'none';
   });
   document.getElementById('previewOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
+  requestAnimationFrame(updatePreviewGuides);
 }
 
 function closePreview() {
@@ -2810,26 +3393,129 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closePreview();
     closeModal();
+    closeTableModal();
     hideImageToolbar();
+    hideTableToolbar();
   }
 });
 
 /* ═══════════════════════════════════════════
    أدوات التنسيق
    ═══════════════════════════════════════════ */
+function clearFormatting() {
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
+  restoreSelectionState();
+  const selection = window.getSelection();
+  const savedRange = selection && selection.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+  document.execCommand('removeFormat', false, null);
+  const styleProps = ['font-family', 'font-size', 'color', 'background-color'];
+  if (savedRange && !savedRange.collapsed) {
+    const root = savedRange.commonAncestorContainer.nodeType === 1 ? savedRange.commonAncestorContainer : savedRange.commonAncestorContainer.parentElement;
+    const targets = [];
+    if (root && root !== editor && isNodeInsideEditor(root) && root.matches && root.matches('[style]')) targets.push(root);
+    if (root && root.querySelectorAll) {
+      root.querySelectorAll('[style]').forEach(el => {
+        try { if (savedRange.intersectsNode(el)) targets.push(el); } catch (e) {}
+      });
+    }
+    targets.forEach(el => {
+      styleProps.forEach(prop => el.style.removeProperty(prop));
+      if (!el.getAttribute('style') || !el.getAttribute('style').trim()) el.removeAttribute('style');
+    });
+  } else if (savedRange && savedRange.collapsed) {
+    let curr = savedRange.startContainer.nodeType === 1 ? savedRange.startContainer : savedRange.startContainer.parentElement;
+    while (curr && curr !== editor && isNodeInsideEditor(curr)) {
+      if (curr.style) {
+        styleProps.forEach(prop => curr.style.removeProperty(prop));
+        if (!curr.getAttribute('style') || !curr.getAttribute('style').trim()) curr.removeAttribute('style');
+      }
+      curr = curr.parentElement;
+    }
+  }
+  editor.focus();
+  if (savedRange) {
+    try {
+      selection.removeAllRanges();
+      selection.addRange(savedRange);
+    } catch (e) {}
+  }
+  isDirty = true;
+  setSaveStatus(false);
+  saveSelectionState();
+  syncToolbarState();
+  updatePageGuides();
+}
+
 function fmt(command, value) {
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
+
+  restoreSelectionState();
   document.execCommand(command, false, value || null);
   editor.focus();
+  isDirty = true;
+  setSaveStatus(false);
+  saveSelectionState();
+  syncToolbarState();
+  updatePageGuides();
 }
 
 function applyFontFamily(font) {
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
+
+  restoreSelectionState();
   document.execCommand('fontName', false, font);
   editor.focus();
+  isDirty = true;
+  setSaveStatus(false);
+  saveSelectionState();
+  syncToolbarState();
+  updatePageGuides();
 }
 
 function applyFontSize(size) {
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
+
+  restoreSelectionState();
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0 && isNodeInsideEditor(sel.anchorNode)) {
+    const range = sel.getRangeAt(0);
+    const targetTags = new Set(['SPAN', 'P', 'DIV', 'TD', 'TH']);
+    if (!range.collapsed) {
+      const common = range.commonAncestorContainer;
+      const rootEl = common.nodeType === 1 ? common : common.parentElement;
+      if (rootEl && isNodeInsideEditor(rootEl)) {
+        if (targetTags.has(rootEl.tagName) && rootEl !== editor && rootEl.style && rootEl.style.fontSize) {
+          rootEl.style.fontSize = '';
+        }
+        rootEl.querySelectorAll('span, p, div, td, th').forEach(el => {
+          try {
+            if (range.intersectsNode(el) && el.style && el.style.fontSize) {
+              el.style.fontSize = '';
+            }
+          } catch (e) {}
+        });
+      }
+    } else {
+      let curr = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement;
+      while (curr && curr !== editor && isNodeInsideEditor(curr)) {
+        if (targetTags.has(curr.tagName) && curr.style && curr.style.fontSize) {
+          curr.style.fontSize = '';
+        }
+        curr = curr.parentElement;
+      }
+    }
+  }
   document.execCommand('fontSize', false, size);
   editor.focus();
+  isDirty = true;
+  setSaveStatus(false);
+  saveSelectionState();
+  syncToolbarState();
+  updatePageGuides();
 }
 
 function changeFontSizeStep(step) {
@@ -2842,12 +3528,281 @@ function changeFontSizeStep(step) {
 }
 
 function applyColor(command, color) {
-  document.execCommand(command === 'hiliteColor' ? 'hiliteColor' : 'foreColor', false, color);
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
+
+  restoreSelectionState();
+  if (command === 'hiliteColor') {
+    try { document.execCommand('styleWithCSS', false, true); } catch (e) {}
+    let ok = false;
+    try { ok = document.execCommand('hiliteColor', false, color); } catch (e) {}
+    if (!ok) {
+      try { document.execCommand('backColor', false, color); } catch (e) {}
+    }
+    try { document.execCommand('styleWithCSS', false, false); } catch (e) {}
+  } else {
+    document.execCommand('foreColor', false, color);
+  }
   editor.focus();
+  isDirty = true;
+  setSaveStatus(false);
+  saveSelectionState();
+  syncToolbarState();
 }
 
 /* ═══════════════════════════════════════════
-   إدراج الصور والتحكم بها
+   أدوات الجداول (إدراج + شريط عائم)
+   ═══════════════════════════════════════════ */
+function openTableModal() {
+  saveSelectionState();
+  document.getElementById('tableRowsInput').value = '3';
+  document.getElementById('tableColsInput').value = '3';
+  document.getElementById('tableInsertModal').classList.add('show');
+}
+
+function closeTableModal() {
+  document.getElementById('tableInsertModal').classList.remove('show');
+}
+
+document.getElementById('tableInsertModal').addEventListener('click', function(e) {
+  if (e.target === this) closeTableModal();
+});
+
+function confirmInsertTable() {
+  const rows = Math.max(1, Math.min(50, parseInt(document.getElementById('tableRowsInput').value, 10) || 3));
+  const cols = Math.max(1, Math.min(20, parseInt(document.getElementById('tableColsInput').value, 10) || 3));
+  closeTableModal();
+
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
+  restoreSelectionState();
+  editor.focus();
+
+  const table = document.createElement('table');
+  const tbody = document.createElement('tbody');
+  for (let r = 0; r < rows; r++) {
+    const tr = document.createElement('tr');
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement(r === 0 ? 'th' : 'td');
+      cell.innerHTML = r === 0 ? `عنوان ${c + 1}` : '<br>';
+      tr.appendChild(cell);
+    }
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+
+  const afterP = document.createElement('p');
+  afterP.innerHTML = '<br>';
+
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0 && isNodeInsideEditor(sel.anchorNode)) {
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(afterP);
+    range.insertNode(table);
+  } else {
+    editor.appendChild(table);
+    editor.appendChild(afterP);
+  }
+
+  const firstCell = table.querySelector('th, td');
+  if (firstCell) {
+    const r = document.createRange();
+    r.selectNodeContents(firstCell);
+    r.collapse(true);
+    const s = window.getSelection();
+    s.removeAllRanges();
+    s.addRange(r);
+    showTableToolbar(firstCell);
+  }
+
+  isDirty = true;
+  setSaveStatus(false);
+  updatePageGuides();
+  showToast(`📊 تم إدراج جدول (${rows} × ${cols})`, 'success');
+}
+
+function showTableToolbar(cell) {
+  activeTableCell = cell;
+  const toolbar = document.getElementById('tableToolbar');
+  const table = cell.closest('table');
+  if (!table) {
+    hideTableToolbar();
+    return;
+  }
+  const rect = cell.getBoundingClientRect();
+  const vv = window.visualViewport;
+  const vvTop = vv ? vv.offsetTop : 0;
+  const vvLeft = vv ? vv.offsetLeft : 0;
+  const vvWidth = vv ? vv.width : window.innerWidth;
+  const vvHeight = vv ? vv.height : window.innerHeight;
+  const toolbarWrapEl = document.getElementById('toolbarWrap');
+  const minTop = Math.max(vvTop + 8, (toolbarWrapEl ? toolbarWrapEl.getBoundingClientRect().bottom : 0) + 8);
+  let top = rect.top - 44;
+  let left = rect.left + (rect.width / 2) - 160;
+  if (top < minTop) top = rect.bottom + 8;
+  const maxTop = vvTop + vvHeight - 50;
+  if (top > maxTop) top = Math.max(minTop, maxTop);
+  if (left < vvLeft + 6) left = vvLeft + 6;
+  if (left + 330 > vvLeft + vvWidth) left = Math.max(vvLeft + 6, vvLeft + vvWidth - 336);
+
+  toolbar.style.top = top + 'px';
+  toolbar.style.left = left + 'px';
+  toolbar.classList.add('show');
+}
+
+function hideTableToolbar() {
+  document.getElementById('tableToolbar').classList.remove('show');
+  activeTableCell = null;
+}
+
+function tableAddRow() {
+  if (!activeTableCell) return;
+  const tr = activeTableCell.closest('tr');
+  const table = activeTableCell.closest('table');
+  if (!tr || !table) return;
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
+  const colCount = tr.children.length || 1;
+  const newTr = document.createElement('tr');
+  for (let i = 0; i < colCount; i++) {
+    const td = document.createElement('td');
+    td.innerHTML = '<br>';
+    newTr.appendChild(td);
+  }
+  tr.parentNode.insertBefore(newTr, tr.nextSibling);
+  const firstNewCell = newTr.children[0] || activeTableCell;
+  if (firstNewCell) {
+    const r = document.createRange();
+    r.selectNodeContents(firstNewCell);
+    r.collapse(true);
+    const s = window.getSelection();
+    s.removeAllRanges();
+    s.addRange(r);
+    showTableToolbar(firstNewCell);
+  }
+  isDirty = true;
+  setSaveStatus(false);
+  updatePageGuides();
+}
+
+function tableDeleteRow() {
+  if (!activeTableCell) return;
+  const tr = activeTableCell.closest('tr');
+  const table = activeTableCell.closest('table');
+  if (!tr || !table) return;
+  const allRows = table.querySelectorAll('tr');
+  if (allRows.length <= 1) {
+    tableDelete();
+    return;
+  }
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
+  const nextFocusRow = tr.nextElementSibling || tr.previousElementSibling;
+  tr.remove();
+  if (nextFocusRow && nextFocusRow.children[0]) {
+    const targetCell = nextFocusRow.children[0];
+    editor.focus();
+    const r = document.createRange();
+    r.selectNodeContents(targetCell);
+    r.collapse(true);
+    const s = window.getSelection();
+    s.removeAllRanges();
+    s.addRange(r);
+    showTableToolbar(targetCell);
+  } else {
+    hideTableToolbar();
+  }
+  isDirty = true;
+  setSaveStatus(false);
+  updatePageGuides();
+}
+
+function tableAddCol() {
+  if (!activeTableCell) return;
+  const tr = activeTableCell.closest('tr');
+  const table = activeTableCell.closest('table');
+  if (!tr || !table) return;
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
+  const colIndex = Array.from(tr.children).indexOf(activeTableCell);
+  const allRows = table.querySelectorAll('tr');
+  let firstNewColCell = null;
+  allRows.forEach((row, idx) => {
+    const isHeaderRow = row.children[0] && row.children[0].tagName === 'TH';
+    const newCell = document.createElement(isHeaderRow ? 'th' : 'td');
+    newCell.innerHTML = isHeaderRow ? 'عنوان' : '<br>';
+    const refCell = row.children[colIndex + 1] || null;
+    row.insertBefore(newCell, refCell);
+    if (row === tr) firstNewColCell = newCell;
+    else if (idx === 0 && !firstNewColCell) firstNewColCell = newCell;
+  });
+  if (firstNewColCell) {
+    const r = document.createRange();
+    r.selectNodeContents(firstNewColCell);
+    r.collapse(true);
+    const s = window.getSelection();
+    s.removeAllRanges();
+    s.addRange(r);
+    showTableToolbar(firstNewColCell);
+  }
+  isDirty = true;
+  setSaveStatus(false);
+  updatePageGuides();
+}
+
+function tableDeleteCol() {
+  if (!activeTableCell) return;
+  const tr = activeTableCell.closest('tr');
+  const table = activeTableCell.closest('table');
+  if (!tr || !table) return;
+  if (tr.children.length <= 1) {
+    tableDelete();
+    return;
+  }
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
+  const colIndex = Array.from(tr.children).indexOf(activeTableCell);
+  const nextCell = tr.children[colIndex + 1] || tr.children[colIndex - 1];
+  const allRows = table.querySelectorAll('tr');
+  allRows.forEach(row => {
+    if (row.children[colIndex]) row.children[colIndex].remove();
+  });
+  if (nextCell) {
+    editor.focus();
+    const r = document.createRange();
+    r.selectNodeContents(nextCell);
+    r.collapse(true);
+    const s = window.getSelection();
+    s.removeAllRanges();
+    s.addRange(r);
+    showTableToolbar(nextCell);
+  } else {
+    hideTableToolbar();
+  }
+  isDirty = true;
+  setSaveStatus(false);
+  updatePageGuides();
+}
+
+function tableDelete() {
+  if (!activeTableCell) return;
+  const table = activeTableCell.closest('table');
+  if (!table) return;
+  confirmAction('هل تريد حذف الجدول بالكامل؟', function() {
+    clearTimeout(historyTimer);
+  pushUndoSnapshot();
+    if (table.parentNode) table.remove();
+    hideTableToolbar();
+    isDirty = true;
+  setSaveStatus(false);
+    updatePageGuides();
+    showToast('🗑️ تم حذف الجدول', '');
+  }, 'danger');
+}
+
+/* ═══════════════════════════════════════════
+   إدراج الصور وضغطها والتحكم بها
    ═══════════════════════════════════════════ */
 function triggerImageUpload() {
   saveSelectionState();
@@ -2855,7 +3810,7 @@ function triggerImageUpload() {
   document.getElementById('imageInput').click();
 }
 
-function handleImageUpload(event) {
+async function handleImageUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
@@ -2864,18 +3819,21 @@ function handleImageUpload(event) {
     return;
   }
 
-  if (file.size > 10 * 1024 * 1024) {
-    showToast('❌ حجم الصورة كبير جداً (الحد الأقصى 10 ميغابايت)', 'error');
+  if (file.size > 20 * 1024 * 1024) {
+    showToast('❌ حجم الصورة كبير جداً (الحد الأقصى 20 ميغابايت)', 'error');
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
+  showToast('⏳ جاري ضغط الصورة وإدراجها...', '');
+  try {
+    const compressedDataUrl = await compressImageFile(file);
+    clearTimeout(historyTimer);
+  pushUndoSnapshot();
     restoreSelectionState();
     editor.focus();
 
     const img = document.createElement('img');
-    img.src = e.target.result;
+    img.src = compressedDataUrl;
     img.style.maxWidth = '100%';
     img.style.height = 'auto';
     img.style.borderRadius = '4px';
@@ -2883,40 +3841,35 @@ function handleImageUpload(event) {
     img.style.margin = '10px auto';
 
     const sel = window.getSelection();
-    if (sel && sel.rangeCount > 0) {
-      let node = sel.anchorNode, inside = false;
-      let curr = node;
-      while (curr) {
-        if (curr === editor) { inside = true; break; }
-        curr = curr.parentNode;
-      }
-      if (inside) {
-        const range = sel.getRangeAt(0);
-        range.deleteContents();
-        const br = document.createElement('br');
-        range.insertNode(br);
-        range.insertNode(img);
-        range.setStartAfter(br);
-        range.setEndAfter(br);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        savedSelection = range.cloneRange();
-        showToast('🖼️ تم إدراج الصورة بنجاح', 'success');
-        return;
-      }
+    if (sel && sel.rangeCount > 0 && isNodeInsideEditor(sel.anchorNode)) {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const br = document.createElement('br');
+      range.insertNode(br);
+      range.insertNode(img);
+      range.setStartAfter(br);
+      range.setEndAfter(br);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      savedSelection = range.cloneRange();
+      isDirty = true;
+  setSaveStatus(false);
+      updatePageGuides();
+      showToast('🖼️ تم ضغط وإدراج الصورة بنجاح', 'success');
+      return;
     }
 
     editor.appendChild(img);
     editor.appendChild(document.createElement('br'));
     placeCaretAtEnd();
-    showToast('🖼️ تم إدراج الصورة بنجاح', 'success');
-  };
-
-  reader.onerror = function() {
-    showToast('❌ فشلت قراءة الصورة', 'error');
-  };
-
-  reader.readAsDataURL(file);
+    isDirty = true;
+  setSaveStatus(false);
+    updatePageGuides();
+    showToast('🖼️ تم ضغط وإدراج الصورة بنجاح', 'success');
+  } catch (err) {
+    console.error('Image upload/compress error:', err);
+    showToast('❌ فشلت قراءة أو ضغط الصورة', 'error');
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -2929,12 +3882,21 @@ function showImageToolbar(img) {
 
   const toolbar = document.getElementById('imgToolbar');
   const rect = img.getBoundingClientRect();
+  const vv = window.visualViewport;
+  const vvTop = vv ? vv.offsetTop : 0;
+  const vvLeft = vv ? vv.offsetLeft : 0;
+  const vvWidth = vv ? vv.width : window.innerWidth;
+  const vvHeight = vv ? vv.height : window.innerHeight;
+  const toolbarWrapEl = document.getElementById('toolbarWrap');
+  const minTop = Math.max(vvTop + 8, (toolbarWrapEl ? toolbarWrapEl.getBoundingClientRect().bottom : 0) + 8);
   let top = rect.top - 46;
   let left = rect.left + (rect.width / 2) - 165;
 
-  if (top < 10) top = rect.bottom + 8;
-  if (left < 6) left = 6;
-  if (left + 330 > window.innerWidth) left = window.innerWidth - 336;
+  if (top < minTop) top = rect.bottom + 8;
+  const maxTop = vvTop + vvHeight - 54;
+  if (top > maxTop) top = Math.max(minTop, maxTop);
+  if (left < vvLeft + 6) left = vvLeft + 6;
+  if (left + 330 > vvLeft + vvWidth) left = Math.max(vvLeft + 6, vvLeft + vvWidth - 336);
 
   toolbar.style.top = top + 'px';
   toolbar.style.left = left + 'px';
@@ -2951,13 +3913,20 @@ function hideImageToolbar() {
 
 function resizeSelectedImage(size) {
   if (!selectedImage) return;
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
   selectedImage.style.maxWidth = size;
   selectedImage.style.width = size;
+  isDirty = true;
+  setSaveStatus(false);
+  updatePageGuides();
   setTimeout(() => { if (selectedImage) showImageToolbar(selectedImage); }, 50);
 }
 
 function alignSelectedImage(align) {
   if (!selectedImage) return;
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
   if (align === 'center') {
     selectedImage.style.display = 'block';
     selectedImage.style.marginLeft = 'auto';
@@ -2974,13 +3943,21 @@ function alignSelectedImage(align) {
     selectedImage.style.marginRight = 'auto';
     selectedImage.style.float = 'none';
   }
+  isDirty = true;
+  setSaveStatus(false);
+  updatePageGuides();
   setTimeout(() => { if (selectedImage) showImageToolbar(selectedImage); }, 50);
 }
 
 function deleteSelectedImage() {
   if (!selectedImage) return;
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
   selectedImage.remove();
   hideImageToolbar();
+  isDirty = true;
+  setSaveStatus(false);
+  updatePageGuides();
   showToast('🗑️ تم حذف الصورة', '');
 }
 
@@ -2988,9 +3965,16 @@ editor.addEventListener('click', function(e) {
   if (e.target.tagName === 'IMG') {
     e.preventDefault();
     e.stopPropagation();
+    hideTableToolbar();
     showImageToolbar(e.target);
+    return;
+  }
+  hideImageToolbar();
+  const cell = e.target.closest('td, th');
+  if (cell && isNodeInsideEditor(cell)) {
+    showTableToolbar(cell);
   } else {
-    hideImageToolbar();
+    hideTableToolbar();
   }
 });
 
@@ -2998,14 +3982,143 @@ document.addEventListener('click', function(e) {
   if (selectedImage && !e.target.closest('#imgToolbar') && !e.target.closest('#editor')) {
     hideImageToolbar();
   }
+  if (activeTableCell && !e.target.closest('#tableToolbar') && !e.target.closest('#editor')) {
+    hideTableToolbar();
+  }
 });
 
 window.addEventListener('scroll', function() {
   if (selectedImage) showImageToolbar(selectedImage);
+  if (activeTableCell) showTableToolbar(activeTableCell);
 }, { passive: true });
 
 window.addEventListener('resize', function() {
   if (selectedImage) showImageToolbar(selectedImage);
+  if (activeTableCell) showTableToolbar(activeTableCell);
+});
+
+if (window.visualViewport) {
+  const syncFloatingToolbars = function() {
+    if (selectedImage) showImageToolbar(selectedImage);
+    if (activeTableCell) showTableToolbar(activeTableCell);
+  };
+  window.visualViewport.addEventListener('scroll', syncFloatingToolbars, { passive: true });
+  window.visualViewport.addEventListener('resize', syncFloatingToolbars, { passive: true });
+}
+
+/* ═══════════════════════════════════════════
+   اعتراض حدث اللصق (ضغط الصور + تعقيم HTML)
+   ═══════════════════════════════════════════ */
+editor.addEventListener('paste', async function(e) {
+  const cd = e.clipboardData || window.clipboardData;
+  if (!cd) return;
+
+  // 1. التحقق من وجود صورة في الحافظة
+  let imageFile = null;
+  if (cd.items && cd.items.length) {
+    for (const item of cd.items) {
+      if (item.kind === 'file' && item.type && item.type.startsWith('image/')) {
+        imageFile = item.getAsFile();
+        break;
+      }
+    }
+  }
+  if (!imageFile && cd.files && cd.files.length) {
+    for (const f of cd.files) {
+      if (f.type && f.type.startsWith('image/')) {
+        imageFile = f;
+        break;
+      }
+    }
+  }
+
+  if (imageFile) {
+    e.preventDefault();
+    saveSelectionState();
+    showToast('⏳ جاري ضغط الصورة الملصقة...', '');
+    try {
+      const compressedDataUrl = await compressImageFile(imageFile);
+      clearTimeout(historyTimer);
+  pushUndoSnapshot();
+      restoreSelectionState();
+      editor.focus();
+
+      const img = document.createElement('img');
+      img.src = compressedDataUrl;
+      img.style.maxWidth = '100%';
+      img.style.height = 'auto';
+      img.style.borderRadius = '4px';
+      img.style.display = 'block';
+      img.style.margin = '10px auto';
+
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && isNodeInsideEditor(sel.anchorNode)) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const br = document.createElement('br');
+        range.insertNode(br);
+        range.insertNode(img);
+        range.setStartAfter(br);
+        range.setEndAfter(br);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        savedSelection = range.cloneRange();
+      } else {
+        editor.appendChild(img);
+        editor.appendChild(document.createElement('br'));
+        placeCaretAtEnd();
+      }
+      isDirty = true;
+  setSaveStatus(false);
+      updatePageGuides();
+      showToast('🖼️ تم ضغط ولصق الصورة بنجاح', 'success');
+    } catch (err) {
+      console.error('Paste image error:', err);
+      showToast('❌ تعذر معالجة الصورة الملصقة', 'error');
+    }
+    return;
+  }
+
+  // 2. التحقق من وجود محتوى HTML في الحافظة وتعقيمه
+  const htmlData = cd.getData('text/html');
+  if (htmlData && htmlData.trim()) {
+    e.preventDefault();
+    saveSelectionState();
+    clearTimeout(historyTimer);
+    pushUndoSnapshot();
+    const plainText = cd.getData('text/plain') || '';
+    let cleaned = sanitizeHtml(htmlData);
+    const temp = document.createElement('div');
+    temp.innerHTML = cleaned;
+    for (const img of Array.from(temp.querySelectorAll('img'))) {
+      const src = img.getAttribute('src') || '';
+      if (/^data:image\//i.test(src)) {
+        try { img.setAttribute('src', await compressImageDataUrl(src)); }
+        catch (err) { console.warn('Embedded paste image compression failed:', err); }
+      }
+    }
+    // حذف الصور ذات الروابط الخارجية غير المضمّنة بـ data:image
+    temp.querySelectorAll('img').forEach(img => {
+      const src = (img.getAttribute('src') || '').trim().toLowerCase();
+      if (!src.startsWith('data:image/')) {
+        img.remove();
+      }
+    });
+    const safeHtml = temp.innerHTML;
+    restoreSelectionState();
+    editor.focus();
+    if (safeHtml.trim()) {
+      document.execCommand('insertHTML', false, safeHtml);
+    } else if (plainText) {
+      document.execCommand('insertText', false, plainText);
+    } else {
+      return;
+    }
+    isDirty = true;
+    setSaveStatus(false);
+    updatePageGuides();
+    syncToolbarState();
+  }
 });
 
 /* ═══════════════════════════════════════════
@@ -3065,7 +4178,7 @@ function toggleSpeech() {
   recognition.onerror = function(event) {
     console.warn('Speech Recognition error:', event.error);
     if (event.error === 'no-speech' || event.error === 'aborted') {
-      return; // عدم مقاطعة المستخدم عند التوقف المؤقت
+      return;
     }
 
     let reason = '';
@@ -3094,7 +4207,6 @@ function toggleSpeech() {
   };
 
   recognition.onend = function() {
-    // إعادة التشغيل تلقائياً طالما أن المستخدم لم يضغط إيقاف
     if (isRecording) {
       setTimeout(function() {
         if (isRecording && recognition) {
@@ -3135,34 +4247,35 @@ function stopSpeech() {
 }
 
 function insertTextAtCursor(text) {
+  clearTimeout(historyTimer);
+  pushUndoSnapshot();
+
   editor.focus();
   if (savedSelection) restoreSelectionState();
 
   const sel = window.getSelection();
-  if (sel && sel.rangeCount > 0) {
-    let node = sel.anchorNode, inside = false;
-    let curr = node;
-    while (curr) {
-      if (curr === editor) { inside = true; break; }
-      curr = curr.parentNode;
-    }
-    if (inside) {
-      const range = sel.getRangeAt(0);
-      range.deleteContents();
-      const textNode = document.createTextNode(text);
-      range.insertNode(textNode);
-      range.setStartAfter(textNode);
-      range.setEndAfter(textNode);
-      sel.removeAllRanges();
-      sel.addRange(range);
-      savedSelection = range.cloneRange();
-      return;
-    }
+  if (sel && sel.rangeCount > 0 && isNodeInsideEditor(sel.anchorNode)) {
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    const textNode = document.createTextNode(text);
+    range.insertNode(textNode);
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    savedSelection = range.cloneRange();
+    isDirty = true;
+  setSaveStatus(false);
+    updatePageGuides();
+    return;
   }
 
   const textNode = document.createTextNode(text);
   editor.appendChild(textNode);
   placeCaretAtEnd();
+  isDirty = true;
+  setSaveStatus(false);
+  updatePageGuides();
 }
 
 function placeCaretAtEnd() {
@@ -3180,6 +4293,55 @@ function placeCaretAtEnd() {
    اختصارات لوحة المفاتيح
    ═══════════════════════════════════════════ */
 document.addEventListener('keydown', function(e) {
+  // التنقل بـ Tab و Shift+Tab داخل خلايا الجداول
+  if (e.key === 'Tab') {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && isNodeInsideEditor(sel.anchorNode)) {
+      const anchorEl = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
+      const cell = anchorEl ? anchorEl.closest('td, th') : null;
+      if (cell && isNodeInsideEditor(cell)) {
+        const table = cell.closest('table');
+        if (table) {
+          e.preventDefault();
+          const cells = Array.from(table.querySelectorAll('td, th'));
+          const idx = cells.indexOf(cell);
+          if (e.shiftKey) {
+            if (idx > 0) {
+              const prevCell = cells[idx - 1];
+              const r = document.createRange();
+              r.selectNodeContents(prevCell);
+              r.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(r);
+              showTableToolbar(prevCell);
+            }
+          } else {
+            if (idx >= 0 && idx < cells.length - 1) {
+              const nextCell = cells[idx + 1];
+              const r = document.createRange();
+              r.selectNodeContents(nextCell);
+              r.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(r);
+              showTableToolbar(nextCell);
+            } else if (idx === cells.length - 1) {
+              // آخر خلية في الجدول: إضافة صف جديد تلقائياً ونقل المؤشر إليه
+              activeTableCell = cell;
+              tableAddRow();
+            }
+          }
+          return;
+        }
+      }
+    }
+  }
+
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
+    e.preventDefault();
+    performRedo();
+    return;
+  }
+
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
     switch(e.key.toLowerCase()) {
       case 's':
@@ -3198,6 +4360,14 @@ document.addEventListener('keydown', function(e) {
         e.preventDefault();
         fmt('underline');
         break;
+      case 'z':
+        e.preventDefault();
+        performUndo();
+        break;
+      case 'y':
+        e.preventDefault();
+        performRedo();
+        break;
     }
   }
   if ((e.key === 'Delete' || e.key === 'Backspace') && selectedImage) {
@@ -3207,19 +4377,24 @@ document.addEventListener('keydown', function(e) {
 });
 
 /* ═══════════════════════════════════════════
-   حفظ تلقائي صامت في الخلفية كل 30 ثانية
+   حفظ تلقائي في الخلفية كل 30 ثانية عبر IndexedDB
    ═══════════════════════════════════════════ */
-setInterval(function() {
-  if (editor.innerHTML.trim()) {
+setInterval(async function() {
+  if (isDirty && editor.innerHTML.trim()) {
     try {
-      localStorage.setItem('miniword_content', editor.innerHTML);
+      await idbSet('miniword_content', editor.innerHTML);
       const now = new Date();
       const timeStr = now.toLocaleString('ar-EG', {
         year: 'numeric', month: 'short', day: 'numeric',
         hour: '2-digit', minute: '2-digit'
       });
-      localStorage.setItem('miniword_time', timeStr);
-    } catch (e) {}
+      await idbSet('miniword_time', timeStr);
+      isDirty = false;
+      setSaveStatus(true);
+    } catch (e) {
+      console.error('Auto-save failed:', e);
+      showToast('⚠️ فشل الحفظ التلقائي: تعذر الوصول لذاكرة المتصفح', 'error');
+    }
   }
 }, 30000);
 
