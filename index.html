@@ -2,7 +2,16 @@
 <html lang="ar" dir="rtl"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mini Word">
 <title>Mini Word — محرر نصوص عربي</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
 <!-- خطوط جوجل العربية -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -103,8 +112,168 @@ body {
   font-size: 14px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
+}
+
+.app-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: #fff;
+  object-fit: contain;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,.15);
+}
+
+.install-app-btn {
+  background: rgba(255,255,255,.18);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.32);
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background .15s;
+  flex-shrink: 0;
+}
+
+.install-app-btn:hover {
+  background: rgba(255,255,255,.3);
+}
+
+.install-app-btn.hidden {
+  display: none;
+}
+
+.app-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: opacity .35s ease, visibility .35s ease;
+}
+
+.app-splash.hide {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.app-splash img {
+  width: 84px;
+  height: 84px;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(37,99,235,.14);
+}
+
+.app-splash h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.app-splash p {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.pwa-install-banner {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  z-index: 9998;
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(15,23,42,.18);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(94vw, 440px);
+  width: max-content;
+  opacity: 0;
+  visibility: hidden;
+  transition: transform .25s ease, opacity .25s ease, visibility .25s ease;
+}
+
+.pwa-install-banner.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.pwa-install-banner img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.pwa-install-banner .pwa-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 12px;
+}
+
+.pwa-install-banner .pwa-banner-text strong {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.pwa-install-banner .pwa-banner-text span {
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+.pwa-install-banner .pwa-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: 4px;
+}
+
+.pwa-install-banner .btn-install-now {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pwa-install-banner .btn-install-now:hover {
+  background: var(--primary-hover);
+}
+
+.pwa-install-banner .btn-install-later {
+  background: #f1f5f9;
+  color: var(--text-light);
+  border: none;
+  border-radius: 7px;
+  padding: 6px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .file-actions {
@@ -172,7 +341,7 @@ body {
   background: var(--toolbar-bg);
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .toolbar-row {
@@ -181,7 +350,7 @@ body {
   justify-content: center;
   gap: 6px;
   padding: 4px 10px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .toolbar-row + .toolbar-row {
@@ -388,6 +557,18 @@ body.landscape-mode .paper-stage {
 
 .paper:focus {
   box-shadow: none;
+}
+
+.paper img,
+.paper table,
+.paper blockquote,
+.paper pre,
+.preview-body img,
+.preview-body table,
+.preview-body blockquote,
+.preview-body pre {
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .paper img {
@@ -829,9 +1010,16 @@ body.landscape-mode .preview-container {
     top: 36px;
   }
   .toolbar-row {
-    justify-content: space-between;
-    padding: 2px 3px;
-    gap: 1px;
+    justify-content: flex-start;
+    padding: 2px 4px;
+    gap: 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .toolbar-row::-webkit-scrollbar {
+    display: none;
   }
   .toolbar-group {
     gap: 2px;
@@ -908,7 +1096,7 @@ body.landscape-mode .preview-container {
     padding: 0 !important;
   }
 
-  .file-bar, .toolbar-wrap, .toast, .modal-overlay, .preview-overlay, .img-toolbar, .table-toolbar, .page-guides {
+  .file-bar, .toolbar-wrap, .toast, .modal-overlay, .preview-overlay, .img-toolbar, .table-toolbar, .page-guides, .app-splash, .pwa-install-banner {
     display: none !important;
   }
 
@@ -929,10 +1117,27 @@ body.landscape-mode .preview-container {
     max-width: 100% !important;
     min-height: auto !important;
     border-radius: 0 !important;
-    padding: 15mm !important;
+    padding: 20mm !important;
     margin: 0 !important;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
+  }
+
+  .paper img,
+  .paper table,
+  .paper blockquote,
+  .paper pre {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .paper tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  [data-page-shift] {
+    margin-top: 0 !important;
   }
 
   .paper img {
@@ -965,6 +1170,24 @@ body.landscape-mode .preview-container {
 </head>
 <body>
 
+<div class="app-splash" id="appSplash" aria-hidden="true">
+  <img src="./icon-192.png" alt="Mini Word">
+  <h2>Mini Word</h2>
+  <p>محرر النصوص العربي</p>
+</div>
+
+<div class="pwa-install-banner" id="pwaInstallBanner" role="dialog" aria-label="تثبيت البرنامج">
+  <img src="./icon-192.png" alt="Mini Word">
+  <div class="pwa-banner-text">
+    <strong>تثبيت البرنامج على سطح المكتب</strong>
+    <span>افتح Mini Word كبرنامج مستقل ويعمل بدون إنترنت</span>
+  </div>
+  <div class="pwa-banner-actions">
+    <button class="btn-install-now" onclick="triggerPwaInstall()">تثبيت</button>
+    <button class="btn-install-later" onclick="dismissInstallBanner()">لاحقاً</button>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════
      1. الشريط العلوي — سطر واحد مضغوط
      ═══════════════════════════════════════ -->
@@ -973,7 +1196,7 @@ body.landscape-mode .preview-container {
     <button class="file-menu-trigger" id="fileMenuBtn" onclick="toggleFileMenu(event)" data-tooltip="القائمة">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
     </button>
-    <span class="app-title">Mini Word</span>
+    <span class="app-title"><img src="./icon-192.png" alt="Mini Word" class="app-logo"><span>Mini Word</span></span>
 
     <div class="file-actions" id="fileActionsMenu" onclick="closeFileMenu()">
     <button onclick="confirmAction('هل تريد إنشاء مستند جديد؟\nسيتم مسح المحتوى الحالي.', newDocument, 'danger')" data-tooltip="مستند جديد">
@@ -986,7 +1209,7 @@ body.landscape-mode .preview-container {
       <span>فتح</span>
     </button>
 
-    <button onclick="confirmAction('هل تريد حفظ المستند في ذاكرة المتصفح؟', saveDocument, 'confirm')" data-tooltip="حفظ محلي">
+    <button onclick="saveDocument()" data-tooltip="حفظ محلي">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
       <span>حفظ</span>
     </button>
@@ -1011,6 +1234,7 @@ body.landscape-mode .preview-container {
     </button>
     </div>
   </div>
+  <button class="install-app-btn" id="installAppBtn" onclick="triggerPwaInstall()" data-tooltip="تثبيت البرنامج على سطح المكتب أو الشاشة الرئيسية">📲 تثبيت البرنامج</button>
   <span id="saveStatus" class="save-status">محفوظ ✓</span>
 </div>
 
@@ -1207,7 +1431,7 @@ body.landscape-mode .preview-container {
     </div>
     <div class="modal-actions">
       <button class="btn btn-confirm" id="modalConfirmBtn" onclick="modalConfirm()">نعم، متأكد</button>
-      <button class="btn btn-cancel" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-cancel" id="modalCancelBtn" onclick="closeModal()">إلغاء</button>
     </div>
   </div>
 </div>
@@ -1226,11 +1450,8 @@ body.landscape-mode .preview-container {
   </div>
 </div>
 
-
-</div>
-
 <!-- رسالة Toast -->
-<div class="toast success" id="toast">📥 تم تنزيل ملف Word (.docx)</div>
+<div class="toast" id="toast"></div>
 
 <script>
 /* ═══════════════════════════════════════════
@@ -1368,6 +1589,9 @@ function sanitizeHtml(html) {
    ضغط الصور تلقائياً عبر Canvas (حد أقصى 1200px، جودة 0.82)
    ═══════════════════════════════════════════ */
 function compressImageDataUrl(dataUrl) {
+  if (/^data:image\/(gif|svg\+xml)/i.test(dataUrl)) {
+    return Promise.resolve(dataUrl);
+  }
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = function() {
@@ -1387,15 +1611,15 @@ function compressImageDataUrl(dataUrl) {
           resolve(dataUrl);
           return;
         }
-        const isPng = /^data:image\/png/i.test(dataUrl);
-        if (!isPng) {
+        const mayHaveAlpha = /^data:image\/(png|webp)/i.test(dataUrl);
+        if (!mayHaveAlpha) {
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, targetW, targetH);
         }
         ctx.drawImage(img, 0, 0, targetW, targetH);
 
         let keepPng = false;
-        if (isPng) {
+        if (mayHaveAlpha) {
           try {
             const pixels = ctx.getImageData(0, 0, targetW, targetH).data;
             for (let i = 3; i < pixels.length; i += 4) {
@@ -1566,11 +1790,50 @@ document.addEventListener('click', function(e) {
   if (!e.target.closest('.file-menu-wrap')) closeFileMenu();
 });
 
+function adjustPageBreakSpacing(container, pageHeight) {
+  if (!container) return;
+  container.querySelectorAll('[data-page-shift]').forEach(el => {
+    const orig = el.getAttribute('data-orig-mt');
+    el.style.marginTop = orig !== null ? orig : '';
+    el.removeAttribute('data-page-shift');
+    el.removeAttribute('data-orig-mt');
+  });
+
+  const cs = window.getComputedStyle(container);
+  const padTop = parseFloat(cs.paddingTop) || 0;
+  const stride = pageHeight + PAGE_GAP;
+  const candidates = Array.from(container.querySelectorAll('img, table'));
+
+  for (const el of candidates) {
+    if (el.closest('table') && el.closest('table') !== el) continue;
+    const cRect = container.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+    if (!rect.height || rect.height > pageHeight - Math.min(padTop, 40)) continue;
+
+    const relTop = rect.top - cRect.top;
+    const relBottom = relTop + rect.height;
+    const pageIdx = Math.max(0, Math.floor(relTop / stride));
+    const pageEnd = pageIdx * stride + pageHeight;
+
+    if (relBottom > pageEnd - 4) {
+      const nextContentTop = (pageIdx + 1) * stride + Math.min(padTop, 32);
+      const shift = Math.ceil(nextContentTop - relTop);
+      if (shift > 0) {
+        el.setAttribute('data-orig-mt', el.style.marginTop || '');
+        el.setAttribute('data-page-shift', '1');
+        const currentMt = parseFloat(window.getComputedStyle(el).marginTop) || 0;
+        el.style.marginTop = (currentMt + shift) + 'px';
+      }
+    }
+  }
+}
+
 function updatePageGuides() {
   const pageHeight = getA4PageHeight();
+  adjustPageBreakSpacing(editor, pageHeight);
   editor.style.minHeight = '0px';
   const contentHeight = editor.scrollHeight;
-  const totalPages = Math.max(1, Math.ceil(contentHeight / (pageHeight + PAGE_GAP)));
+  const totalPages = Math.max(1, Math.ceil((contentHeight + PAGE_GAP) / (pageHeight + PAGE_GAP)));
   const totalHeight = totalPages * pageHeight + (totalPages - 1) * PAGE_GAP;
   editor.style.minHeight = totalHeight + 'px';
 
@@ -1626,24 +1889,28 @@ window.addEventListener('beforeunload', function(e) {
 /* ═══════════════════════════════════════════
    نظام نوافذ التأكيد الصارم (Modal)
    ═══════════════════════════════════════════ */
-function confirmAction(message, action, type, showFilename = false) {
+function confirmAction(message, action, type, showFilename = false, alertOnly = false) {
   const modal = document.getElementById('confirmModal');
   const icon = document.getElementById('modalIcon');
   const title = document.getElementById('modalTitle');
   const msg = document.getElementById('modalMessage');
   const btn = document.getElementById('modalConfirmBtn');
+  const cancelBtn = document.getElementById('modalCancelBtn');
   const fnWrap = document.getElementById('modalFileNameWrap');
   const fnInput = document.getElementById('modalFileNameInput');
 
   if (type === 'danger') {
     icon.textContent = '⚠️';
-    title.textContent = 'تأكيد الإجراء';
+    title.textContent = alertOnly ? 'تنبيه' : 'تأكيد الإجراء';
     btn.className = 'btn btn-danger';
   } else {
     icon.textContent = '✅';
-    title.textContent = 'تأكيد';
+    title.textContent = alertOnly ? 'إشعار' : 'تأكيد';
     btn.className = 'btn btn-confirm';
   }
+
+  btn.textContent = alertOnly ? 'حسناً' : 'نعم، متأكد';
+  if (cancelBtn) cancelBtn.style.display = alertOnly ? 'none' : '';
 
   if (fnWrap) {
     fnWrap.classList.toggle('show', !!showFilename);
@@ -1667,11 +1934,11 @@ function modalConfirm() {
   const cleanName = (rawName || 'مستند_Mini_Word').replace(/[\\/:*?"<>|]+/g, '_').replace(/\.(docx|pdf)$/i, '') || 'مستند_Mini_Word';
   closeModal();
   if (pending && typeof pending.fn === 'function') {
-    if (pending.withFilename) {
-      pending.fn(cleanName);
-    } else {
-      pending.fn();
-    }
+    Promise.resolve(pending.withFilename ? pending.fn(cleanName) : pending.fn())
+      .catch(err => {
+        console.error('Modal action error:', err);
+        showToast('❌ حدث خطأ أثناء تنفيذ العملية', 'error');
+      });
   }
 }
 
@@ -2504,13 +2771,17 @@ function parseMarkdownToHtml(md) {
       html += `<blockquote>${inlineMd(line.replace(/^>\s?/, ''))}</blockquote>`;
       continue;
     }
-    const lm = line.match(/^\s*[-*+]\s+(.*)$/) || line.match(/^\s*\d+\.\s+(.*)$/);
-    if (lm) {
-      if (!inList) { html += '<ul>'; inList = true; }
-      html += `<li>${inlineMd(lm[1])}</li>`;
+    const ulMatch = line.match(/^\s*[-*+]\s+(.*)$/);
+    const olMatch = line.match(/^\s*\d+\.\s+(.*)$/);
+    if (ulMatch || olMatch) {
+      const listTag = olMatch ? 'ol' : 'ul';
+      const itemText = olMatch ? olMatch[1] : ulMatch[1];
+      if (inList && inList !== listTag) { html += `</${inList}>`; inList = false; }
+      if (!inList) { html += `<${listTag}>`; inList = listTag; }
+      html += `<li>${inlineMd(itemText)}</li>`;
       continue;
     }
-    if (inList) { html += '</ul>'; inList = false; }
+    if (inList) { html += `</${inList}>`; inList = false; }
     if (/^---+$/.test(line.trim())) {
       html += '<hr class="pdf-page-sep">';
     } else if (line.trim() === '') {
@@ -2519,7 +2790,7 @@ function parseMarkdownToHtml(md) {
       html += `<p>${inlineMd(line)}</p>`;
     }
   }
-  if (inList) html += '</ul>';
+  if (inList) html += `</${inList}>`;
   if (inCode) html += '<pre>' + escapeHtmlStr(codeBuf.join('\n')) + '</pre>';
   return html;
 }
@@ -2672,6 +2943,7 @@ function xmlEscape(str) {
     .replace(/'/g, '&apos;');
 }
 
+let _colorProbeCtx = null;
 function rgbToHex(color) {
   if (!color) return null;
   const trimmed = color.trim().toLowerCase();
@@ -2682,12 +2954,32 @@ function rgbToHex(color) {
     return /^[0-9a-f]{6}$/i.test(h) ? h.toUpperCase() : null;
   }
   const rgbaMatch = trimmed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/i);
-  if (!rgbaMatch) return null;
-  if (rgbaMatch[4] !== undefined && parseFloat(rgbaMatch[4]) === 0) return null;
-  return [rgbaMatch[1], rgbaMatch[2], rgbaMatch[3]]
-    .map(n => Math.max(0, Math.min(255, Number(n))).toString(16).padStart(2, '0'))
-    .join('')
-    .toUpperCase();
+  if (rgbaMatch) {
+    if (rgbaMatch[4] !== undefined && parseFloat(rgbaMatch[4]) === 0) return null;
+    return [rgbaMatch[1], rgbaMatch[2], rgbaMatch[3]]
+      .map(n => Math.max(0, Math.min(255, Number(n))).toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase();
+  }
+  if (!_colorProbeCtx) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 1;
+    _colorProbeCtx = c.getContext('2d');
+  }
+  if (_colorProbeCtx) {
+    _colorProbeCtx.fillStyle = '#010203';
+    _colorProbeCtx.fillStyle = trimmed;
+    const first = _colorProbeCtx.fillStyle;
+    _colorProbeCtx.fillStyle = '#040506';
+    _colorProbeCtx.fillStyle = trimmed;
+    const second = _colorProbeCtx.fillStyle;
+    if (first === second) {
+      if (first === 'rgba(0, 0, 0, 0)' || first === 'transparent') return null;
+      if (first.startsWith('#') && first.length === 7) return first.slice(1).toUpperCase();
+      return rgbToHex(first);
+    }
+  }
+  return null;
 }
 
 function cssSizeToHalfPoints(sizeStr) {
@@ -2830,6 +3122,15 @@ async function exportWord(fileName) {
     img.setAttribute('data-cw', String((cell && cell.clientWidth) || editorWidthPx));
   });
   const clone = editor.cloneNode(true);
+  clone.style.minHeight = '';
+  clone.style.paddingTop = '';
+  clone.querySelectorAll('[data-page-shift]').forEach(el => {
+    const orig = el.getAttribute('data-orig-mt');
+    el.style.marginTop = orig !== null ? orig : '';
+    el.style.paddingTop = '';
+    el.removeAttribute('data-page-shift');
+    el.removeAttribute('data-orig-mt');
+  });
   liveImgs.forEach(img => {
     img.removeAttribute('data-nw');
     img.removeAttribute('data-nh');
@@ -2841,7 +3142,7 @@ async function exportWord(fileName) {
     img.classList.remove('img-selected');
     img.style.outline = 'none';
     const src = img.getAttribute('src') || '';
-    if (/^data:image\/webp;base64,/i.test(src)) {
+    if (/^data:image\/(webp|svg\+xml);base64,/i.test(src)) {
       const converted = await convertWebpForDocx(src);
       img.setAttribute('src', converted);
     }
@@ -2904,6 +3205,7 @@ async function exportWord(fileName) {
     if (node.nodeType === Node.TEXT_NODE) {
       const txt = node.nodeValue;
       if (txt) {
+        if (meta && txt.trim()) meta.hasText = true;
         runs.push(`<w:r>${buildRunProps(st)}<w:t xml:space="preserve">${xmlEscape(txt)}</w:t></w:r>`);
       }
       return;
@@ -2912,17 +3214,28 @@ async function exportWord(fileName) {
 
     const tag = node.tagName.toUpperCase();
     if (tag === 'BR') {
-      runs.push('<w:r><w:br/></w:r>');
+      const p = node.parentNode;
+      const isSolePlaceholder = p && p.nodeType === 1 && /^(P|DIV|H[1-6]|BLOCKQUOTE|TD|TH|LI)$/.test(p.tagName.toUpperCase())
+        && !p.textContent.trim() && p.querySelectorAll('br, img').length === 1;
+      if (!isSolePlaceholder) {
+        runs.push('<w:r><w:br/></w:r>');
+      }
       return;
     }
     if (tag === 'IMG') {
       const src = node.getAttribute('src') || '';
-      const m = src.match(/^data:image\/(png|jpeg|jpg|gif|webp);base64,(.+)$/i);
+      const m = src.match(/^data:image\/(png|jpeg|jpg|gif|webp|bmp);base64,(.+)$/i);
       if (m) {
+        let bytes;
+        try {
+          const bin = atob(m[2].replace(/\s+/g, ''));
+          bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        } catch (err) {
+          console.warn('Invalid base64 image skipped in DOCX export:', err);
+          return;
+        }
         const ext = m[1].toLowerCase() === 'jpg' ? 'jpeg' : m[1].toLowerCase();
-        const bin = atob(m[2]);
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
         const idx = mediaFiles.length + 1;
         const rId = 'rIdImg' + idx;
         mediaFiles.push({ name: `word/media/image${idx}.${ext}`, ext, rId, data: bytes });
@@ -2996,13 +3309,15 @@ async function exportWord(fileName) {
       if (a === 'justify') return 'both';
       curr = curr.parentNode;
     }
-    return defaultAlign || 'both';
+    return defaultAlign || 'right';
   }
 
   function makeParagraphXml(runs, align, dir, extraPPr = '') {
-    const jc = align || 'both';
-    const bidiTag = dir === 'ltr' ? '' : '<w:bidi w:val="1"/>';
-    return `<w:p><w:pPr>${bidiTag}<w:jc w:val="${jc}"/>${extraPPr}</w:pPr>${runs.join('')}</w:p>`;
+    const isLtr = dir === 'ltr';
+    const jc = align || (isLtr ? 'left' : 'right');
+    const bidiTag = isLtr ? '' : '<w:bidi/>';
+    const indTag = (!isLtr && !/<w:ind\b/.test(extraPPr)) ? '<w:ind w:left="0" w:right="0"/>' : '';
+    return `<w:p><w:pPr>${bidiTag}<w:jc w:val="${jc}"/>${indTag}${extraPPr}</w:pPr>${runs.join('')}</w:p>`;
   }
 
   const bodyBlocks = [];
@@ -3034,7 +3349,7 @@ async function exportWord(fileName) {
           const spanInfo = occupied[rIdx + '_' + cIdx];
           const gs = spanInfo.colspan > 1 ? `<w:gridSpan w:val="${spanInfo.colspan}"/>` : '';
           const shd = spanInfo.fill ? `<w:shd w:val="clear" w:color="auto" w:fill="${spanInfo.fill}"/>` : '';
-          tcXml += `<w:tc><w:tcPr>${gs}<w:vMerge/>${shd}</w:tcPr><w:p><w:pPr><w:bidi w:val="1"/><w:jc w:val="both"/></w:pPr></w:p></w:tc>`;
+          tcXml += `<w:tc><w:tcPr>${gs}<w:vMerge/>${shd}</w:tcPr><w:p><w:pPr>${tblDir === 'ltr' ? '' : '<w:bidi/>'}<w:jc w:val="${tblDir === 'ltr' ? 'left' : 'right'}"/></w:pPr></w:p></w:tc>`;
           cIdx += spanInfo.colspan;
         }
       }
@@ -3076,7 +3391,7 @@ async function exportWord(fileName) {
         const cellBlocks = [];
         const baseStyle = cTag === 'TH' ? { bold: true } : {};
         const cellDir = getDir(cell);
-        const cellAlign = getAlign(cell, 'both');
+        const cellAlign = getAlign(cell, cellDir === 'ltr' ? 'left' : 'right');
 
         let cellInline = [];
         let cellInlineMeta = {};
@@ -3150,7 +3465,8 @@ async function exportWord(fileName) {
   let inlineMeta = {};
   function flushInline(dir, align) {
     if (inlineBuffer.length) {
-      pushParagraph(inlineBuffer, inlineMeta.imgAlign || align || 'both', dir || 'rtl');
+      const d = dir || 'rtl';
+      pushParagraph(inlineBuffer, inlineMeta.imgAlign || align || (d === 'ltr' ? 'left' : 'right'), d);
       inlineBuffer = [];
       inlineMeta = {};
     }
@@ -3168,10 +3484,59 @@ async function exportWord(fileName) {
     return false;
   }
 
+  function processList(listEl, level) {
+    const isOrd = listEl.tagName.toUpperCase() === 'OL';
+    let idx = 1;
+    const listDir = getDir(listEl);
+    const indAttr = listDir === 'ltr' ? `w:left="${(level + 1) * 360}"` : `w:right="${(level + 1) * 360}"`;
+    for (const li of listEl.children) {
+      if (!li.tagName || li.tagName.toUpperCase() !== 'LI') continue;
+      const prefix = isOrd ? `${idx++}. ` : '• ';
+      const runs = [`<w:r><w:rPr><w:rtl/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr><w:t xml:space="preserve">${xmlEscape(prefix)}</w:t></w:r>`];
+      const liMeta = {};
+      const nestedLists = [];
+      for (const ch of li.childNodes) {
+        if (ch.nodeType === 1 && (ch.tagName.toUpperCase() === 'UL' || ch.tagName.toUpperCase() === 'OL')) {
+          nestedLists.push(ch);
+        } else {
+          extractRuns(ch, {}, runs, liMeta);
+        }
+      }
+      const pAlign = (!liMeta.hasText && liMeta.imgAlign) ? liMeta.imgAlign : getAlign(li);
+      pushParagraph(runs, pAlign, getDir(li), `<w:ind ${indAttr}/>`);
+      nestedLists.forEach(nl => processList(nl, level + 1));
+    }
+  }
+
+  let consecutiveEmptyParas = 0;
+
+  function hasImageOrTable(el) {
+    if (!el || el.nodeType !== 1) return false;
+    const t = el.tagName.toUpperCase();
+    if (t === 'IMG' || t === 'TABLE') return true;
+    return !!el.querySelector('img, table');
+  }
+
+  function nextNonEmptySibling(node) {
+    let sib = node ? node.nextSibling : null;
+    while (sib) {
+      if (sib.nodeType === Node.TEXT_NODE) {
+        if (sib.nodeValue.trim()) return sib;
+      } else if (sib.nodeType === Node.ELEMENT_NODE) {
+        const isEmptyPara = /^(P|DIV)$/.test(sib.tagName.toUpperCase())
+          && !sib.textContent.trim() && !sib.querySelector('img, table, hr');
+        if (!isEmptyPara) return sib;
+      }
+      sib = sib.nextSibling;
+    }
+    return null;
+  }
+
   function walkBlocks(container) {
     for (const node of container.childNodes) {
       if (node.nodeType === Node.TEXT_NODE) {
         if (node.nodeValue.trim() || node.nodeValue.includes(' ')) {
+          consecutiveEmptyParas = 0;
           extractRuns(node, {}, inlineBuffer, inlineMeta);
         }
         continue;
@@ -3179,22 +3544,26 @@ async function exportWord(fileName) {
       if (node.nodeType !== Node.ELEMENT_NODE) continue;
       const tag = node.tagName.toUpperCase();
 
+      if (tag === 'HR' || (node.style && (node.style.pageBreakBefore === 'always' || node.style.breakBefore === 'page'))) {
+        flushInline(getDir(container), getAlign(container));
+        if (bodyBlocks.length && !bodyBlocks[bodyBlocks.length - 1].includes('w:type="page"')) {
+          bodyBlocks.push('<w:p><w:r><w:br w:type="page"/></w:r></w:p>');
+        }
+        consecutiveEmptyParas = 0;
+        if (tag === 'HR') continue;
+      }
+
       if (tag === 'TABLE') {
         flushInline(getDir(container), getAlign(container));
         const tblXml = buildTableXml(node);
-        if (tblXml) bodyBlocks.push(tblXml);
+        if (tblXml) {
+          bodyBlocks.push(tblXml);
+          consecutiveEmptyParas = 0;
+        }
       } else if (tag === 'UL' || tag === 'OL') {
         flushInline(getDir(container), getAlign(container));
-        let idx = 1;
-        for (const li of node.children) {
-          if (li.tagName && li.tagName.toUpperCase() === 'LI') {
-            const prefix = tag === 'OL' ? `${idx++}. ` : '• ';
-            const runs = [`<w:r><w:rPr><w:rtl/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr><w:t xml:space="preserve">${xmlEscape(prefix)}</w:t></w:r>`];
-            const liMeta = {};
-            extractRuns(li, {}, runs, liMeta);
-            pushParagraph(runs, liMeta.imgAlign || getAlign(li), getDir(li));
-          }
-        }
+        processList(node, 0);
+        consecutiveEmptyParas = 0;
       } else if (tag === 'DIV' && hasBlockChild(node)) {
         flushInline(getDir(container), getAlign(container));
         walkBlocks(node);
@@ -3213,17 +3582,46 @@ async function exportWord(fileName) {
         } else if (tag === 'PRE') {
           base = { ltr: true, font: 'Courier New', size: 22 };
         }
+        const mlVal = parseFloat(node.style && (node.style.marginLeft || node.style.paddingLeft)) || 0;
+        if (mlVal > 0 && !/<w:ind\b/.test(extraPPr)) {
+          extraPPr += `<w:ind w:left="${Math.round(mlVal * 15)}"/>`;
+        }
         extractRuns(node, base, runs, pMeta);
-        pushParagraph(runs, pMeta.imgAlign || getAlign(node), getDir(node), extraPPr);
+        const isEmptyPara = runs.length === 0;
+        if (isEmptyPara) {
+          consecutiveEmptyParas++;
+          if (consecutiveEmptyParas > 1) continue;
+          const nextEl = nextNonEmptySibling(node);
+          if (hasImageOrTable(nextEl)) {
+            extraPPr += '<w:keepNext/>';
+          }
+        } else {
+          consecutiveEmptyParas = 0;
+          const txtLen = (node.textContent || '').trim().length;
+          if (txtLen > 0 && (txtLen <= 120 || /^H[1-6]$/.test(tag))) {
+            const nextEl = nextNonEmptySibling(node);
+            if (hasImageOrTable(nextEl)) {
+              extraPPr += '<w:keepNext/>';
+            }
+          }
+        }
+        const defAlign = tag === 'PRE' ? 'left' : undefined;
+        const pDir = tag === 'PRE' ? ((node.style && node.style.direction) || node.getAttribute('dir') || 'ltr') : getDir(node);
+        const pAlign = (!pMeta.hasText && pMeta.imgAlign) ? pMeta.imgAlign : getAlign(node, defAlign);
+        pushParagraph(runs, pAlign, pDir, extraPPr);
       } else {
         extractRuns(node, {}, inlineBuffer, inlineMeta);
+        if (inlineBuffer.length) consecutiveEmptyParas = 0;
       }
     }
     flushInline(getDir(container), getAlign(container));
   }
 
   walkBlocks(clone);
-  if (!bodyBlocks.length) bodyBlocks.push('<w:p><w:pPr><w:bidi w:val="1"/><w:jc w:val="both"/></w:pPr></w:p>');
+  while (bodyBlocks.length > 1 && /^<w:p><w:pPr>(?:<w:bidi\/>)?<w:jc w:val="(?:right|left|center|both)"\/>(?:<w:ind [^>]+>)?<\/w:pPr><\/w:p>$/.test(bodyBlocks[bodyBlocks.length - 1])) {
+    bodyBlocks.pop();
+  }
+  if (!bodyBlocks.length) bodyBlocks.push('<w:p><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr></w:p>');
 
   const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
@@ -3253,26 +3651,41 @@ async function exportWord(fileName) {
     </w:rPrDefault>
     <w:pPrDefault>
       <w:pPr>
-        <w:bidi w:val="1"/>
-        <w:jc w:val="both"/>
+        <w:bidi/>
+        <w:jc w:val="right"/>
       </w:pPr>
     </w:pPrDefault>
   </w:docDefaults>
   <w:style w:type="paragraph" w:default="1" w:styleId="Normal">
     <w:name w:val="Normal"/>
     <w:pPr>
-      <w:bidi w:val="1"/>
-      <w:jc w:val="both"/>
+      <w:bidi/>
+      <w:jc w:val="right"/>
     </w:pPr>
     <w:rPr>
       <w:rtl/>
+      <w:lang w:bidi="ar-SA"/>
     </w:rPr>
   </w:style>
+  ${[1,2,3,4,5,6].map(n => `<w:style w:type="paragraph" w:styleId="Heading${n}">
+    <w:name w:val="heading ${n}"/>
+    <w:basedOn w:val="Normal"/>
+    <w:rPr><w:b/><w:bCs/><w:sz w:val="${headingSizeMap['H'+n]}"/><w:szCs w:val="${headingSizeMap['H'+n]}"/></w:rPr>
+  </w:style>`).join('')}
 </w:styles>`;
+
+  const settingsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:defaultTabStop w:val="720"/>
+  <w:compat>
+    <w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/>
+  </w:compat>
+</w:settings>`;
 
   const docRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+  <Relationship Id="rIdSettings" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>
   ${mediaFiles.map(m => `<Relationship Id="${m.rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${m.name.split('/').pop()}"/>`).join('')}
 </Relationships>`;
 
@@ -3289,8 +3702,10 @@ async function exportWord(fileName) {
   <Default Extension="jpeg" ContentType="image/jpeg"/>
   <Default Extension="gif" ContentType="image/gif"/>
   <Default Extension="webp" ContentType="image/webp"/>
+  <Default Extension="bmp" ContentType="image/bmp"/>
   <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
   <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+  <Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
 </Types>`;
 
   const entries = [
@@ -3298,6 +3713,7 @@ async function exportWord(fileName) {
     { name: '_rels/.rels', data: rootRelsXml },
     { name: 'word/_rels/document.xml.rels', data: docRelsXml },
     { name: 'word/styles.xml', data: stylesXml },
+    { name: 'word/settings.xml', data: settingsXml },
     { name: 'word/document.xml', data: documentXml },
     ...mediaFiles.map(m => ({ name: m.name, data: m.data }))
   ];
@@ -3343,9 +3759,10 @@ function updatePreviewGuides() {
   const ratio = isLandscape ? (210 / 297) : (297 / 210);
   const pageHeight = Math.max(260, Math.round(w * ratio));
 
+  adjustPageBreakSpacing(previewBody, pageHeight);
   previewBody.style.minHeight = '0px';
   const contentHeight = previewBody.scrollHeight;
-  const totalPages = Math.max(1, Math.ceil(contentHeight / (pageHeight + PAGE_GAP)));
+  const totalPages = Math.max(1, Math.ceil((contentHeight + PAGE_GAP) / (pageHeight + PAGE_GAP)));
   previewBody.style.minHeight = (totalPages * pageHeight + (totalPages - 1) * PAGE_GAP) + 'px';
 
   const orientText = isLandscape ? ' عرضي' : '';
@@ -3406,25 +3823,25 @@ function clearFormatting() {
   clearTimeout(historyTimer);
   pushUndoSnapshot();
   restoreSelectionState();
-  const selection = window.getSelection();
-  const savedRange = selection && selection.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
   document.execCommand('removeFormat', false, null);
+  const selection = window.getSelection();
+  const activeRange = selection && selection.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
   const styleProps = ['font-family', 'font-size', 'color', 'background-color'];
-  if (savedRange && !savedRange.collapsed) {
-    const root = savedRange.commonAncestorContainer.nodeType === 1 ? savedRange.commonAncestorContainer : savedRange.commonAncestorContainer.parentElement;
+  if (activeRange && !activeRange.collapsed) {
+    const root = activeRange.commonAncestorContainer.nodeType === 1 ? activeRange.commonAncestorContainer : activeRange.commonAncestorContainer.parentElement;
     const targets = [];
     if (root && root !== editor && isNodeInsideEditor(root) && root.matches && root.matches('[style]')) targets.push(root);
     if (root && root.querySelectorAll) {
       root.querySelectorAll('[style]').forEach(el => {
-        try { if (savedRange.intersectsNode(el)) targets.push(el); } catch (e) {}
+        try { if (activeRange.intersectsNode(el)) targets.push(el); } catch (e) {}
       });
     }
     targets.forEach(el => {
       styleProps.forEach(prop => el.style.removeProperty(prop));
       if (!el.getAttribute('style') || !el.getAttribute('style').trim()) el.removeAttribute('style');
     });
-  } else if (savedRange && savedRange.collapsed) {
-    let curr = savedRange.startContainer.nodeType === 1 ? savedRange.startContainer : savedRange.startContainer.parentElement;
+  } else if (activeRange && activeRange.collapsed) {
+    let curr = activeRange.startContainer.nodeType === 1 ? activeRange.startContainer : activeRange.startContainer.parentElement;
     while (curr && curr !== editor && isNodeInsideEditor(curr)) {
       if (curr.style) {
         styleProps.forEach(prop => curr.style.removeProperty(prop));
@@ -3434,10 +3851,10 @@ function clearFormatting() {
     }
   }
   editor.focus();
-  if (savedRange) {
+  if (activeRange) {
     try {
       selection.removeAllRanges();
-      selection.addRange(savedRange);
+      selection.addRange(activeRange);
     } catch (e) {}
   }
   isDirty = true;
@@ -3598,8 +4015,30 @@ function confirmInsertTable() {
   if (sel && sel.rangeCount > 0 && isNodeInsideEditor(sel.anchorNode)) {
     const range = sel.getRangeAt(0);
     range.deleteContents();
-    range.insertNode(afterP);
-    range.insertNode(table);
+    let containerEl = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement;
+    let blockAncestor = null;
+    while (containerEl && containerEl !== editor) {
+      if (containerEl.tagName === 'TD' || containerEl.tagName === 'TH') break;
+      if (/^(P|H[1-6]|BLOCKQUOTE|PRE)$/.test(containerEl.tagName)) {
+        blockAncestor = containerEl;
+      }
+      containerEl = containerEl.parentElement;
+    }
+    if (blockAncestor && blockAncestor.parentNode) {
+      const parent = blockAncestor.parentNode;
+      const isBlockEmpty = !blockAncestor.textContent.trim() && !blockAncestor.querySelector('img, table');
+      if (isBlockEmpty) {
+        parent.insertBefore(table, blockAncestor);
+        parent.insertBefore(afterP, blockAncestor);
+        blockAncestor.remove();
+      } else {
+        parent.insertBefore(afterP, blockAncestor.nextSibling);
+        parent.insertBefore(table, afterP);
+      }
+    } else {
+      range.insertNode(afterP);
+      range.insertNode(table);
+    }
   } else {
     editor.appendChild(table);
     editor.appendChild(afterP);
@@ -3663,14 +4102,23 @@ function tableAddRow() {
   if (!tr || !table) return;
   clearTimeout(historyTimer);
   pushUndoSnapshot();
-  const colCount = tr.children.length || 1;
+  const colCount = Math.max(1, Array.from(tr.children).reduce((s, c) => s + (parseInt(c.getAttribute('colspan') || '1', 10) || 1), 0));
   const newTr = document.createElement('tr');
   for (let i = 0; i < colCount; i++) {
     const td = document.createElement('td');
     td.innerHTML = '<br>';
     newTr.appendChild(td);
   }
-  tr.parentNode.insertBefore(newTr, tr.nextSibling);
+  if (tr.parentNode && tr.parentNode.tagName === 'THEAD') {
+    let tbody = table.querySelector('tbody');
+    if (!tbody) {
+      tbody = document.createElement('tbody');
+      table.appendChild(tbody);
+    }
+    tbody.insertBefore(newTr, tbody.firstChild);
+  } else {
+    tr.parentNode.insertBefore(newTr, tr.nextSibling);
+  }
   const firstNewCell = newTr.children[0] || activeTableCell;
   if (firstNewCell) {
     const r = document.createRange();
@@ -3718,6 +4166,27 @@ function tableDeleteRow() {
   updatePageGuides();
 }
 
+function getVisualColOffset(row, targetCell) {
+  let offset = 0;
+  for (const ch of row.children) {
+    if (ch === targetCell) return offset;
+    offset += Math.max(1, parseInt(ch.getAttribute('colspan') || '1', 10) || 1);
+  }
+  return offset;
+}
+
+function findCellAtVisualCol(row, targetOffset) {
+  let offset = 0;
+  for (const ch of row.children) {
+    const span = Math.max(1, parseInt(ch.getAttribute('colspan') || '1', 10) || 1);
+    if (targetOffset >= offset && targetOffset < offset + span) {
+      return { cell: ch, span, startsAt: offset };
+    }
+    offset += span;
+  }
+  return null;
+}
+
 function tableAddCol() {
   if (!activeTableCell) return;
   const tr = activeTableCell.closest('tr');
@@ -3725,14 +4194,20 @@ function tableAddCol() {
   if (!tr || !table) return;
   clearTimeout(historyTimer);
   pushUndoSnapshot();
-  const colIndex = Array.from(tr.children).indexOf(activeTableCell);
-  const allRows = table.querySelectorAll('tr');
+  const activeSpan = Math.max(1, parseInt(activeTableCell.getAttribute('colspan') || '1', 10) || 1);
+  const insertAfterOffset = getVisualColOffset(tr, activeTableCell) + activeSpan - 1;
+  const allRows = table.querySelectorAll(':scope > tr, :scope > thead > tr, :scope > tbody > tr, :scope > tfoot > tr');
   let firstNewColCell = null;
   allRows.forEach((row, idx) => {
     const isHeaderRow = row.children[0] && row.children[0].tagName === 'TH';
+    const hit = findCellAtVisualCol(row, insertAfterOffset);
+    if (hit && hit.span > 1 && insertAfterOffset < hit.startsAt + hit.span - 1) {
+      hit.cell.setAttribute('colspan', String(hit.span + 1));
+      return;
+    }
     const newCell = document.createElement(isHeaderRow ? 'th' : 'td');
     newCell.innerHTML = isHeaderRow ? 'عنوان' : '<br>';
-    const refCell = row.children[colIndex + 1] || null;
+    const refCell = hit ? hit.cell.nextElementSibling : null;
     row.insertBefore(newCell, refCell);
     if (row === tr) firstNewColCell = newCell;
     else if (idx === 0 && !firstNewColCell) firstNewColCell = newCell;
@@ -3756,19 +4231,26 @@ function tableDeleteCol() {
   const tr = activeTableCell.closest('tr');
   const table = activeTableCell.closest('table');
   if (!tr || !table) return;
-  if (tr.children.length <= 1) {
+  const totalColsInRow = Array.from(tr.children).reduce((s, c) => s + (parseInt(c.getAttribute('colspan') || '1', 10) || 1), 0);
+  if (totalColsInRow <= 1) {
     tableDelete();
     return;
   }
   clearTimeout(historyTimer);
   pushUndoSnapshot();
-  const colIndex = Array.from(tr.children).indexOf(activeTableCell);
-  const nextCell = tr.children[colIndex + 1] || tr.children[colIndex - 1];
-  const allRows = table.querySelectorAll('tr');
+  const targetOffset = getVisualColOffset(tr, activeTableCell);
+  const nextCell = activeTableCell.nextElementSibling || activeTableCell.previousElementSibling;
+  const allRows = table.querySelectorAll(':scope > tr, :scope > thead > tr, :scope > tbody > tr, :scope > tfoot > tr');
   allRows.forEach(row => {
-    if (row.children[colIndex]) row.children[colIndex].remove();
+    const hit = findCellAtVisualCol(row, targetOffset);
+    if (!hit) return;
+    if (hit.span > 1) {
+      hit.cell.setAttribute('colspan', String(hit.span - 1));
+    } else {
+      hit.cell.remove();
+    }
   });
-  if (nextCell) {
+  if (nextCell && isNodeInsideEditor(nextCell)) {
     editor.focus();
     const r = document.createRange();
     r.selectNodeContents(nextCell);
@@ -3917,6 +4399,7 @@ function resizeSelectedImage(size) {
   pushUndoSnapshot();
   selectedImage.style.maxWidth = size;
   selectedImage.style.width = size;
+  selectedImage.style.height = 'auto';
   isDirty = true;
   setSaveStatus(false);
   updatePageGuides();
@@ -4124,6 +4607,8 @@ editor.addEventListener('paste', async function(e) {
 /* ═══════════════════════════════════════════
    الإملاء الصوتي (متوافق مع Chrome وسامسونج بدون getUserMedia)
    ═══════════════════════════════════════════ */
+let noSpeechRestarts = 0;
+
 function toggleSpeech() {
   if (isRecording) {
     stopSpeech();
@@ -4134,8 +4619,10 @@ function toggleSpeech() {
   if (!SpeechRecognition) {
     confirmAction(
       'متصفحك لا يدعم ميزة الإملاء الصوتي.\n\nيرجى استخدام متصفح Google Chrome أو متصفح سامسونج.',
-      function(){},
-      'danger'
+      null,
+      'danger',
+      false,
+      true
     );
     return;
   }
@@ -4145,16 +4632,21 @@ function toggleSpeech() {
   try {
     recognition = new SpeechRecognition();
   } catch(e) {
-    confirmAction('تعذر تهيئة التعرف على الصوت: ' + e.message, function(){}, 'danger');
+    confirmAction('تعذر تهيئة التعرف على الصوت: ' + e.message, null, 'danger', false, true);
     return;
   }
 
+  noSpeechRestarts = 0;
   recognition.lang = 'ar-SA';
   recognition.continuous = false;
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
   recognition.onstart = function() {
+    if (!isRecording) {
+      clearTimeout(historyTimer);
+      pushUndoSnapshot();
+    }
     isRecording = true;
     const micBtn = document.getElementById('micBtn');
     if (micBtn) micBtn.classList.add('recording');
@@ -4164,6 +4656,7 @@ function toggleSpeech() {
   };
 
   recognition.onresult = function(event) {
+    noSpeechRestarts = 0;
     let transcript = '';
     for (let i = event.resultIndex; i < event.results.length; i++) {
       if (event.results[i] && event.results[i][0]) {
@@ -4177,7 +4670,16 @@ function toggleSpeech() {
 
   recognition.onerror = function(event) {
     console.warn('Speech Recognition error:', event.error);
-    if (event.error === 'no-speech' || event.error === 'aborted') {
+    if (event.error === 'no-speech') {
+      noSpeechRestarts++;
+      if (noSpeechRestarts >= 3) {
+        stopSpeech(true);
+        showToast('🔇 تم إيقاف المايكروفون لعدم وجود صوت', '');
+      }
+      return;
+    }
+    if (event.error === 'aborted') {
+      stopSpeech(true);
       return;
     }
 
@@ -4202,8 +4704,8 @@ function toggleSpeech() {
         reason = 'خطأ في التعرف على الصوت: ' + event.error;
     }
 
-    stopSpeech();
-    confirmAction(reason, function(){}, 'danger');
+    stopSpeech(true);
+    confirmAction(reason, null, 'danger', false, true);
   };
 
   recognition.onend = function() {
@@ -4214,6 +4716,8 @@ function toggleSpeech() {
             recognition.start();
           } catch(e) {
             console.warn('Restart speech error:', e);
+            stopSpeech(true);
+            showToast('🔇 تعذر استمرار الإملاء الصوتي', 'error');
           }
         }
       }, 200);
@@ -4225,12 +4729,13 @@ function toggleSpeech() {
   } catch(err) {
     console.error('Recognition start error:', err);
     isRecording = false;
-    confirmAction('تعذر بدء تشغيل المايكروفون:\n' + (err.message || err), function(){}, 'danger');
+    confirmAction('تعذر بدء تشغيل المايكروفون:\n' + (err.message || err), null, 'danger', false, true);
   }
 }
 
-function stopSpeech() {
+function stopSpeech(silent = false) {
   isRecording = false;
+  noSpeechRestarts = 0;
   if (recognition) {
     try {
       recognition.onend = null;
@@ -4243,29 +4748,34 @@ function stopSpeech() {
   if (micBtn) micBtn.classList.remove('recording');
   const micLabel = document.getElementById('micLabel');
   if (micLabel) micLabel.textContent = 'مايك';
-  showToast('🔇 تم إيقاف المايكروفون', '');
+  if (!silent) showToast('🔇 تم إيقاف المايكروفون', '');
 }
 
 function insertTextAtCursor(text) {
-  clearTimeout(historyTimer);
-  pushUndoSnapshot();
+  if (!isRecording) {
+    clearTimeout(historyTimer);
+    pushUndoSnapshot();
+  }
 
-  editor.focus();
   if (savedSelection) restoreSelectionState();
-
   const sel = window.getSelection();
-  if (sel && sel.rangeCount > 0 && isNodeInsideEditor(sel.anchorNode)) {
-    const range = sel.getRangeAt(0);
+  if (!sel || sel.rangeCount === 0 || !isNodeInsideEditor(sel.anchorNode)) {
+    editor.focus();
+  }
+
+  const curSel = window.getSelection();
+  if (curSel && curSel.rangeCount > 0 && isNodeInsideEditor(curSel.anchorNode)) {
+    const range = curSel.getRangeAt(0);
     range.deleteContents();
     const textNode = document.createTextNode(text);
     range.insertNode(textNode);
     range.setStartAfter(textNode);
     range.setEndAfter(textNode);
-    sel.removeAllRanges();
-    sel.addRange(range);
+    curSel.removeAllRanges();
+    curSel.addRange(range);
     savedSelection = range.cloneRange();
     isDirty = true;
-  setSaveStatus(false);
+    setSaveStatus(false);
     updatePageGuides();
     return;
   }
@@ -4346,7 +4856,7 @@ document.addEventListener('keydown', function(e) {
     switch(e.key.toLowerCase()) {
       case 's':
         e.preventDefault();
-        confirmAction('هل تريد حفظ المستند في ذاكرة المتصفح؟', saveDocument, 'confirm');
+        saveDocument();
         break;
       case 'b':
         e.preventDefault();
@@ -4373,8 +4883,24 @@ document.addEventListener('keydown', function(e) {
   if ((e.key === 'Delete' || e.key === 'Backspace') && selectedImage) {
     e.preventDefault();
     deleteSelectedImage();
+  } else if (selectedImage && !e.ctrlKey && !e.metaKey && !e.altKey && e.key !== 'Shift' && e.key !== 'Escape') {
+    hideImageToolbar();
   }
 });
+
+['tableRowsInput', 'tableColsInput'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); confirmInsertTable(); }
+  });
+});
+
+const modalFnInput = document.getElementById('modalFileNameInput');
+if (modalFnInput) {
+  modalFnInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); modalConfirm(); }
+  });
+}
 
 /* ═══════════════════════════════════════════
    حفظ تلقائي في الخلفية كل 30 ثانية عبر IndexedDB
@@ -4397,6 +4923,116 @@ setInterval(async function() {
     }
   }
 }, 30000);
+
+/* ═══════════════════════════════════════════
+   PWA: شاشة الترحيب + Service Worker + التثبيت التلقائي
+   ═══════════════════════════════════════════ */
+let deferredInstallPrompt = null;
+
+function isRunningStandalone() {
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+    || window.navigator.standalone === true;
+}
+
+function updateInstallUiVisibility() {
+  const btn = document.getElementById('installAppBtn');
+  if (btn) btn.classList.toggle('hidden', isRunningStandalone());
+  if (isRunningStandalone()) dismissInstallBanner();
+}
+
+function showInstallBanner() {
+  if (isRunningStandalone()) return;
+  try {
+    if (sessionStorage.getItem('miniword_install_dismissed') === '1') return;
+  } catch (e) {}
+  const banner = document.getElementById('pwaInstallBanner');
+  if (banner) banner.classList.add('show');
+}
+
+function dismissInstallBanner() {
+  const banner = document.getElementById('pwaInstallBanner');
+  if (banner) banner.classList.remove('show');
+  try {
+    sessionStorage.setItem('miniword_install_dismissed', '1');
+  } catch (e) {}
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  updateInstallUiVisibility();
+  setTimeout(showInstallBanner, 650);
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  dismissInstallBanner();
+  const btn = document.getElementById('installAppBtn');
+  if (btn) btn.classList.add('hidden');
+  showToast('✅ تم تثبيت Mini Word بنجاح على جهازك', 'success');
+});
+
+async function triggerPwaInstall() {
+  if (deferredInstallPrompt) {
+    dismissInstallBanner();
+    deferredInstallPrompt.prompt();
+    try {
+      const choice = await deferredInstallPrompt.userChoice;
+      if (choice && choice.outcome === 'accepted') {
+        showToast('📲 جاري تثبيت البرنامج...', 'success');
+      }
+    } catch (e) {}
+    deferredInstallPrompt = null;
+    return;
+  }
+
+  if (location.protocol === 'file:') {
+    confirmAction(
+      'لتفعيل التثبيت المباشر كبرنامج سطح مكتب (PWA)، افتح التطبيق عبر خادم محلي (localhost) أو رابط HTTPS.\n\nأو من قائمة المتصفح (⋮) اختر: حفظ ومشاركة ← تثبيت الصفحة كتطبيق / إنشاء اختصار.',
+      null,
+      'confirm',
+      false,
+      true
+    );
+    return;
+  }
+
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (isIos) {
+    confirmAction(
+      'لتثبيت Mini Word على جهازك:\nاضغط على زر المشاركة (Share) في Safari ثم اختر "إضافة إلى الشاشة الرئيسية" (Add to Home Screen).',
+      null,
+      'confirm',
+      false,
+      true
+    );
+    return;
+  }
+
+  confirmAction(
+    'لتثبيت Mini Word على سطح المكتب:\nاضغط على أيقونة التثبيت في شريط عنوان المتصفح أو افتح قائمة المتصفح (⋮) واختر "تثبيت Mini Word".',
+    null,
+    'confirm',
+    false,
+    true
+  );
+}
+
+window.addEventListener('load', () => {
+  updateInstallUiVisibility();
+  const splash = document.getElementById('appSplash');
+  if (splash) {
+    setTimeout(() => {
+      splash.classList.add('hide');
+      setTimeout(() => splash.remove(), 380);
+    }, 380);
+  }
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('./sw.js').catch((err) => {
+      console.warn('SW registration failed:', err);
+    });
+  }
+});
 
 </script>
 
